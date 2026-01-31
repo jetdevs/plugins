@@ -7,14 +7,14 @@ A Claude Code plugin for migrating NextJS application modules to the `@jetdevs/c
 ### Local Development
 
 ```bash
-claude --plugin-dir ./_context/_claude/plugins/sdk-migration
+claude --plugin-dir ./_context/_claude/plugins/sdk
 ```
 
 ### Team Installation
 
 ```bash
 /plugin marketplace add ./path/to/monorepo
-/plugin install sdk-migration@my-marketplace
+/plugin install sdk@my-marketplace
 ```
 
 ## Quick Start - Single Command Migration
@@ -22,7 +22,7 @@ claude --plugin-dir ./_context/_claude/plugins/sdk-migration
 Use the unified migrate skill to handle everything in one request:
 
 ```
-/sdk-migration:migrate
+/sdk:migrate
 
 Migrate the products module from /apps/old-app/src/features/products to cadra-web
 ```
@@ -39,19 +39,19 @@ This will:
 
 | Skill | Command | Description |
 |-------|---------|-------------|
-| **Migrate (Full)** | `/sdk-migration:migrate` | **Primary** - Complete module migration in one request |
-| Analyze Module | `/sdk-migration:analyze-module` | Just analyze a module (no changes) |
-| Migrate Extension | `/sdk-migration:migrate-extension` | Step-by-step extension guide |
-| Migrate Router | `/sdk-migration:migrate-router` | Router conversion reference |
-| Migrate Schema | `/sdk-migration:migrate-schema` | Schema pattern reference |
-| Migrate Repository | `/sdk-migration:migrate-repository` | Repository pattern reference |
+| **Migrate (Full)** | `/sdk:migrate` | **Primary** - Complete module migration in one request |
+| Analyze Module | `/sdk:analyze-module` | Just analyze a module (no changes) |
+| Migrate Extension | `/sdk:migrate-extension` | Step-by-step extension guide |
+| Migrate Router | `/sdk:migrate-router` | Router conversion reference |
+| Migrate Schema | `/sdk:migrate-schema` | Schema pattern reference |
+| Migrate Repository | `/sdk:migrate-repository` | Repository pattern reference |
 
 ## Example Usage
 
 ### Full Migration (Recommended)
 
 ```
-/sdk-migration:migrate
+/sdk:migrate
 
 Migrate the campaigns module:
 - Source: /apps/ai-saas/src/features/campaigns
@@ -62,7 +62,7 @@ Migrate the campaigns module:
 ### Analysis Only
 
 ```
-/sdk-migration:analyze-module
+/sdk:analyze-module
 
 Analyze /apps/old-app/src/features/products before migrating
 ```

@@ -1,5 +1,5 @@
 {
-  "name": "sdk-migration",
+  "name": "sdk",
   "description": "Migrate NextJS applications to use @jetdevs/core SDK and refactor modules into extensions",
   "version": "1.0.0",
   "author": {

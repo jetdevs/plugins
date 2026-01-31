@@ -11,11 +11,21 @@
   },
   "plugins": [
     {
-      "name": "sdk-migration",
-      "source": "./sdk-migration",
+      "name": "sdk",
+      "source": "./sdk",
       "description": "Migrate NextJS modules to @jetdevs/core SDK extension pattern in a single request",
       "version": "1.0.0",
       "keywords": ["migration", "sdk", "extensions", "nextjs", "trpc", "drizzle"],
+      "author": {
+        "name": "JetDevs Team"
+      }
+    },
+    {
+      "name": "typescript-lsp",
+      "source": "./typescript-lsp",
+      "description": "TypeScript/JavaScript language server for code intelligence (diagnostics, go to definition, find references)",
+      "version": "1.0.0",
+      "keywords": ["typescript", "javascript", "lsp", "code-intelligence"],
       "author": {
         "name": "JetDevs Team"
       }

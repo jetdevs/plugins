@@ -1,0 +1,9 @@
+{
+  "name": "typescript-lsp",
+  "description": "TypeScript/JavaScript language server for code intelligence (go to definition, find references, diagnostics)",
+  "version": "1.0.0",
+  "author": {
+    "name": "JetDevs Team"
+  },
+  "keywords": ["typescript", "javascript", "lsp", "code-intelligence"]
+}

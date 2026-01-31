@@ -1,0 +1,10 @@
+{
+  "name": "sdk-migration",
+  "description": "Migrate NextJS applications to use @jetdevs/core SDK and refactor modules into extensions",
+  "version": "1.0.0",
+  "author": {
+    "name": "JetDevs Team"
+  },
+  "keywords": ["migration", "sdk", "extensions", "nextjs", "trpc", "drizzle"],
+  "repository": "https://github.com/anthropics/claude-code"
+}

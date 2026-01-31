@@ -1,0 +1,24 @@
+{
+  "name": "jetdevs-internal",
+  "owner": {
+    "name": "JetDevs Team",
+    "email": "dev@jetdevs.com"
+  },
+  "metadata": {
+    "description": "Internal plugins for JetDevs SDK development and migrations",
+    "version": "1.0.0",
+    "pluginRoot": "./"
+  },
+  "plugins": [
+    {
+      "name": "sdk-migration",
+      "source": "./sdk-migration",
+      "description": "Migrate NextJS modules to @jetdevs/core SDK extension pattern in a single request",
+      "version": "1.0.0",
+      "keywords": ["migration", "sdk", "extensions", "nextjs", "trpc", "drizzle"],
+      "author": {
+        "name": "JetDevs Team"
+      }
+    }
+  ]
+}

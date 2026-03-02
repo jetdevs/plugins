@@ -1,0 +1,78 @@
+{
+  "$schema": "./story_list.schema.json",
+  "feature": "{feature-name}",
+  "project": "{project-name}",
+  "status": "planning",
+  "created": "{YYYY-MM-DD}",
+  "updated": "{YYYY-MM-DD}",
+  "stories": [
+    {
+      "id": "STORY-001",
+      "title": "Implement core functionality",
+      "description": "As a user, I want to X so that Y",
+      "priority": "P0",
+      "status": "pending",
+      "steps": [
+        "Create database schema and migrations",
+        "Add RLS policies to registry",
+        "Implement service layer with repository pattern",
+        "Create tRPC router with proper procedures",
+        "Build UI components following design system",
+        "Add form validation with Zod schemas",
+        "Connect UI to API endpoints"
+      ],
+      "definition_of_done": [
+        { "item": "Code complete and compiles without errors", "done": false },
+        { "item": "Unit tests written and passing (>80% coverage)", "done": false },
+        { "item": "Integration tests written and passing", "done": false },
+        { "item": "Code review completed", "done": false },
+        { "item": "Documentation updated", "done": false }
+      ],
+      "acceptance_criteria": [
+        { "item": "Uses createRouterWithActor pattern for tRPC router", "verified": false, "verification_method": "manual" },
+        { "item": "Follows repository pattern for data access", "verified": false, "verification_method": "manual" },
+        { "item": "RLS policies implemented and registered", "verified": false, "verification_method": "unit_test" },
+        { "item": "Uses design system components (no custom styling)", "verified": false, "verification_method": "manual" },
+        { "item": "Input validation with Zod schemas", "verified": false, "verification_method": "unit_test" },
+        { "item": "Proper error handling with user feedback", "verified": false, "verification_method": "e2e_test" }
+      ],
+      "passes": false,
+      "verification_script": "src/test/e2e/{feature}.spec.ts",
+      "commits": [],
+      "blockers": [],
+      "dependencies": []
+    },
+    {
+      "id": "STORY-002",
+      "title": "Handle edge cases and error states",
+      "description": "Ensure the feature handles all edge cases gracefully",
+      "priority": "P1",
+      "status": "pending",
+      "steps": [
+        "Implement error boundary components",
+        "Add loading skeleton states",
+        "Design empty state UI with call-to-action",
+        "Add error toast notifications",
+        "Implement retry logic for failed requests"
+      ],
+      "definition_of_done": [
+        { "item": "Code complete and compiles without errors", "done": false },
+        { "item": "Edge case unit tests written and passing", "done": false },
+        { "item": "E2E tests cover error scenarios", "done": false },
+        { "item": "Code review completed", "done": false }
+      ],
+      "acceptance_criteria": [
+        { "item": "Uses standard error boundary pattern from design system", "verified": false, "verification_method": "manual" },
+        { "item": "Loading states use skeleton components (not spinners)", "verified": false, "verification_method": "manual" },
+        { "item": "Empty states follow design system patterns", "verified": false, "verification_method": "manual" },
+        { "item": "Error messages are user-friendly (no technical jargon)", "verified": false, "verification_method": "e2e_test" },
+        { "item": "Errors are logged to telemetry via SDK", "verified": false, "verification_method": "unit_test" }
+      ],
+      "passes": false,
+      "verification_script": "src/test/e2e/{feature}-edge-cases.spec.ts",
+      "commits": [],
+      "blockers": [],
+      "dependencies": ["STORY-001"]
+    }
+  ]
+}

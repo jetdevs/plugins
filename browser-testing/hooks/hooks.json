@@ -1,0 +1,13 @@
+[
+  {
+    "event": "PreToolUse",
+    "name": "Block database mocking",
+    "hooks": [
+      {
+        "type": "prompt",
+        "prompt": "Check if this tool call is writing test code that mocks the database. Look for patterns like:\n- vi.mock(\"@/db/clients\"\n- vi.mock(\"@/db\"\n- vi.mock(\"drizzle-orm\"\n- vi.mock(\"@/db/config\"\n- vi.mock(\"@/db/index\"\n- jest.mock(\"@/db\n- mock database, mock db, mockResolvedValue with database-like objects\n\nIf the tool call contains ANY of these patterns in the content being written, respond with:\n{\"decision\": \"block\", \"reason\": \"Database mocking is banned. Tests must run against a real PostgreSQL database. Mock tests give false confidence — they verify mock behavior, not application behavior. Use integration tests against a real test database instead.\"}\n\nIf the tool call does NOT contain database mocking patterns, respond with:\n{\"decision\": \"approve\"}"
+      }
+    ],
+    "toolNames": ["Write", "Edit"]
+  }
+]

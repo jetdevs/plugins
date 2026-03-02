@@ -1,0 +1,9 @@
+{
+  "name": "dev-workflow",
+  "description": "Development workflow skills for specs, commits, code indexing, and spec reviews",
+  "version": "1.0.0",
+  "author": {
+    "name": "JetDevs Team"
+  },
+  "keywords": ["specs", "commits", "indexing", "review", "workflow", "development"]
+}

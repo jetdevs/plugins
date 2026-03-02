@@ -1,0 +1,9 @@
+{
+  "name": "cadra",
+  "description": "CadraOS AI SaaS platform development - SDK, OpenAPI, agent execution, and platform features",
+  "version": "1.0.0",
+  "author": {
+    "name": "JetDevs Team"
+  },
+  "keywords": ["cadra", "ai-saas", "agents", "sdk", "openapi", "execution"]
+}

@@ -1,0 +1,169 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Story List",
+  "description": "Feature-level story tracking for the Anthropic Agent Harness Protocol",
+  "type": "object",
+  "required": ["feature", "status", "stories"],
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "Reference to this schema file"
+    },
+    "feature": {
+      "type": "string",
+      "description": "Name of the feature being implemented"
+    },
+    "project": {
+      "type": "string",
+      "description": "Project/repo this feature belongs to"
+    },
+    "status": {
+      "type": "string",
+      "enum": ["planning", "in_progress", "testing", "completed", "blocked"],
+      "description": "Overall feature status"
+    },
+    "created": {
+      "type": "string",
+      "format": "date",
+      "description": "Date the story list was created"
+    },
+    "updated": {
+      "type": "string",
+      "format": "date",
+      "description": "Date the story list was last updated"
+    },
+    "stories": {
+      "type": "array",
+      "description": "List of user stories/tasks for this feature",
+      "items": {
+        "type": "object",
+        "required": ["id", "title", "status", "steps", "definition_of_done", "acceptance_criteria", "passes"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[A-Z]+-[0-9]+$",
+            "description": "Unique story identifier (e.g., STORY-001, TASK-001)"
+          },
+          "title": {
+            "type": "string",
+            "description": "Brief description of the story/task"
+          },
+          "description": {
+            "type": "string",
+            "description": "Detailed description of what needs to be done"
+          },
+          "priority": {
+            "type": "string",
+            "enum": ["P0", "P1", "P2", "P3"],
+            "description": "Priority level (P0 = critical, P3 = low)"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["pending", "in_progress", "testing", "blocked", "passes"],
+            "description": "Current status of the story"
+          },
+          "steps": {
+            "type": "array",
+            "description": "Implementation steps - ordered tasks to complete this story (what to build)",
+            "items": {
+              "type": "string"
+            }
+          },
+          "definition_of_done": {
+            "type": "array",
+            "description": "Completion checklist - verifies code is complete, tested, reviewed, documented (ALL must be true)",
+            "items": {
+              "type": "object",
+              "required": ["item", "done"],
+              "properties": {
+                "item": {
+                  "type": "string",
+                  "description": "The definition of done item"
+                },
+                "done": {
+                  "type": "boolean",
+                  "description": "Whether this item is complete"
+                },
+                "notes": {
+                  "type": "string",
+                  "description": "Optional notes about completion"
+                }
+              }
+            }
+          },
+          "acceptance_criteria": {
+            "type": "array",
+            "description": "Architectural/standards verification - patterns, RLS, SDK usage, security, performance (ALL must be verified for passes=true)",
+            "items": {
+              "type": "object",
+              "required": ["item", "verified"],
+              "properties": {
+                "item": {
+                  "type": "string",
+                  "description": "The acceptance criterion (Given/When/Then format preferred)"
+                },
+                "verified": {
+                  "type": "boolean",
+                  "description": "Whether this criterion has been verified"
+                },
+                "verification_method": {
+                  "type": "string",
+                  "enum": ["manual", "unit_test", "integration_test", "e2e_test"],
+                  "description": "How this criterion was verified"
+                },
+                "notes": {
+                  "type": "string",
+                  "description": "Optional notes about verification"
+                }
+              }
+            }
+          },
+          "passes": {
+            "type": "boolean",
+            "description": "True ONLY when ALL definition_of_done items are done AND ALL acceptance_criteria are verified"
+          },
+          "verification_script": {
+            "type": "string",
+            "description": "Path to the test file that verifies this story (e.g., src/test/e2e/feature.spec.ts)"
+          },
+          "commits": {
+            "type": "array",
+            "description": "Git commits associated with this story",
+            "items": {
+              "type": "object",
+              "properties": {
+                "hash": {
+                  "type": "string",
+                  "description": "Git commit hash (short)"
+                },
+                "message": {
+                  "type": "string",
+                  "description": "Commit message"
+                },
+                "date": {
+                  "type": "string",
+                  "format": "date-time",
+                  "description": "Commit date"
+                }
+              }
+            }
+          },
+          "blockers": {
+            "type": "array",
+            "description": "Current blockers preventing progress",
+            "items": {
+              "type": "string"
+            }
+          },
+          "dependencies": {
+            "type": "array",
+            "description": "Story IDs this story depends on",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    }
+  }
+}

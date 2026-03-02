@@ -1,0 +1,9 @@
+{
+  "name": "browser-testing",
+  "description": "Playwright E2E testing patterns enforcing real database testing, error monitoring with denylist, and tRPC batch inspection",
+  "version": "1.0.0",
+  "author": {
+    "name": "JetDevs Team"
+  },
+  "keywords": ["testing", "playwright", "e2e", "smoke", "regression", "error-monitoring"]
+}

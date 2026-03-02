@@ -1,0 +1,9 @@
+{
+  "name": "slides",
+  "description": "Slides presentation editor and Design Studio development - canvas, variables, templates, and dual-mode design",
+  "version": "1.0.0",
+  "author": {
+    "name": "JetDevs Team"
+  },
+  "keywords": ["slides", "presentation", "design-studio", "canvas", "editor", "templates"]
+}

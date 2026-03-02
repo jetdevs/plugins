@@ -1,0 +1,9 @@
+{
+  "name": "crm",
+  "description": "Yobo CRM development - modules, data tables, inline editing, lifecycles, messaging, and multi-tenant patterns",
+  "version": "1.0.0",
+  "author": {
+    "name": "JetDevs Team"
+  },
+  "keywords": ["crm", "data-table", "inline-editing", "lifecycles", "messaging", "leads", "deals", "companies"]
+}

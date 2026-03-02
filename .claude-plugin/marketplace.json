@@ -2,17 +2,17 @@
   "name": "jetdevs-internal",
   "owner": {
     "name": "JetDevs Team",
-    "email": "dev@jetdevs.com"
+    "email": "admin@jetdevs.com"
   },
   "metadata": {
-    "description": "Internal plugins for JetDevs SDK development and migrations",
-    "version": "1.0.0",
+    "description": "Internal plugins for JetDevs app development and migrations",
+    "version": "1.0.1",
     "pluginRoot": "./"
   },
   "plugins": [
     {
-      "name": "sdk",
-      "source": "./sdk",
+      "name": "core-sdk",
+      "source": "./core-sdk",
       "description": "Migrate NextJS modules to @jetdevs/core SDK extension pattern in a single request",
       "version": "1.0.0",
       "keywords": ["migration", "sdk", "extensions", "nextjs", "trpc", "drizzle"],
@@ -26,6 +26,56 @@
       "description": "TypeScript/JavaScript language server for code intelligence (diagnostics, go to definition, find references)",
       "version": "1.0.0",
       "keywords": ["typescript", "javascript", "lsp", "code-intelligence"],
+      "author": {
+        "name": "JetDevs Team"
+      }
+    },
+    {
+      "name": "browser-testing",
+      "source": "./browser-testing",
+      "description": "Playwright E2E testing patterns enforcing real database testing, error monitoring with denylist, and tRPC batch inspection",
+      "version": "1.0.0",
+      "keywords": ["testing", "playwright", "e2e", "smoke", "regression", "error-monitoring"],
+      "author": {
+        "name": "JetDevs Team"
+      }
+    },
+    {
+      "name": "dev-workflow",
+      "source": "./dev-workflow",
+      "description": "Development workflow skills for specs, commits, code indexing, and spec reviews",
+      "version": "1.0.0",
+      "keywords": ["specs", "commits", "indexing", "review", "workflow", "development"],
+      "author": {
+        "name": "JetDevs Team"
+      }
+    },
+    {
+      "name": "cadra",
+      "source": "./cadra",
+      "description": "CadraOS AI SaaS platform development - SDK, OpenAPI, agent execution, and platform features",
+      "version": "1.0.0",
+      "keywords": ["cadra", "ai-saas", "agents", "sdk", "openapi", "execution"],
+      "author": {
+        "name": "JetDevs Team"
+      }
+    },
+    {
+      "name": "slides",
+      "source": "./slides",
+      "description": "Slides presentation editor and Design Studio development - canvas, variables, templates, and dual-mode design",
+      "version": "1.0.0",
+      "keywords": ["slides", "presentation", "design-studio", "canvas", "editor", "templates"],
+      "author": {
+        "name": "JetDevs Team"
+      }
+    },
+    {
+      "name": "crm",
+      "source": "./crm",
+      "description": "Yobo CRM development - modules, data tables, inline editing, lifecycles, messaging, UI/UX design system",
+      "version": "1.0.0",
+      "keywords": ["crm", "data-table", "inline-editing", "lifecycles", "messaging", "leads", "deals", "uiux"],
       "author": {
         "name": "JetDevs Team"
       }

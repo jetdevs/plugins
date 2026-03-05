@@ -79,6 +79,16 @@
       "author": {
         "name": "JetDevs Team"
       }
+    },
+    {
+      "name": "yobo",
+      "source": "./yobo",
+      "description": "Yobo Merchant platform development - campaigns, customers, loyalty, workflows, AI copilot, and multi-tenant SaaS patterns",
+      "version": "1.0.0",
+      "keywords": ["yobo", "merchant", "campaigns", "customers", "loyalty", "workflows", "ai-copilot", "saas"],
+      "author": {
+        "name": "JetDevs Team"
+      }
     }
   ]
 }

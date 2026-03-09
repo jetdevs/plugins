@@ -147,7 +147,7 @@ return withApiAuth(request, async (req, apiContext) => {
 ### Phase 3: Patterns (load based on task type)
 - Backend work: `_context/_arch/patterns-backend.md`
 - Frontend work: `_context/_arch/patterns-frontend.md`, `_context/_arch/pattern-ui.md`, `_context/_arch/pattern-react.md`
-- Debugging: `_context/_arch/lessons-1.md`, `_context/_arch/lessons-2.md`
+- Debugging/errors: **`_context/_arch/core-architecture/lessons-learned.md`** (FIRST — check here for known SDK wiring issues), then `_context/_arch/lessons-1.md`, `_context/_arch/lessons-2.md`
 - General learnings: `_context/_arch/learning-backend.md`, `_context/_arch/learning-frontend.md`
 - Yobo-specific: `_context/yobo-merchant/_arch/`
 
@@ -246,6 +246,7 @@ return withApiAuth(request, async (req, apiContext) => {
 
 ### SDK & Framework Integration
 
+- **root.ts SDK wiring**: `createUserRepositoryClass()` in `src/server/api/root.ts` MUST include `orgMembers` from `@jetdevs/core/db/schema`. Missing it causes intermittent `SDKUserRepository: orgMembers schema is required` errors (only when org context is active). See lessons-learned.md #24.
 - **createRouterWithActor handler signature**: `async ({ input, service, repo, db, actor, ctx })` — use `db` directly, it's already RLS-applied. Use `service.orgId` for org context.
 - **tRPC type inference**: `createRouterWithActor` has type inference limitations across packages. Use `(api.xxx as any)` cast or `@ts-expect-error` comments.
 - **Zod nullable optional**: `z.string().uuid().optional().nullable()` FAILS. Use `z.union([z.string().uuid(), z.null()]).optional()`.

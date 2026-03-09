@@ -85,7 +85,7 @@ Keep responses minimal. Fragments OK. No verbose narratives.
 - Frontend: `_context/_arch/patterns-frontend.md`, `_context/_arch/pattern-ui.md`, `_context/_arch/pattern-react.md`
 - Testing: `_context/_arch/patterns-testing.md`
 - Mobile/PWA: `_context/_arch/pwa-native-app-ux.md`
-- Debugging: `_context/_arch/lessons-1.md`, `_context/_arch/lessons-2.md`
+- Debugging/errors: **`_context/_arch/core-architecture/lessons-learned.md`** (FIRST — check here for known SDK wiring issues), then `_context/_arch/lessons-1.md`, `_context/_arch/lessons-2.md`
 - General learnings: `_context/_arch/learning-backend.md`, `_context/_arch/learning-frontend.md`
 
 ### Phase 2: Use AGENTS.md to Load Relevant Docs

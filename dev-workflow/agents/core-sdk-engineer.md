@@ -197,6 +197,10 @@ cd apps/saas-core-v2 && pnpm dev
 pnpm test:unit
 ```
 
+## Troubleshooting: Check Lessons Learned FIRST
+
+**Before debugging any SDK error**, read `_context/_arch/core-architecture/lessons-learned.md`. It contains 24+ documented issues with exact fixes, including intermittent errors caused by missing schema wiring, auth issues, build failures, and more. Many "new" bugs are known issues that recur when fixes get lost.
+
 ## Common Issues & Solutions
 
 ### "Module not found" errors

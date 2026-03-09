@@ -94,9 +94,9 @@ return withApiAuth(request, async (req, apiContext) => {
 ### Phase 3: Patterns (load based on task type)
 - Backend work: `_context/_arch/patterns-backend.md`
 - Frontend work: `_context/_arch/patterns-frontend.md`, `_context/_arch/pattern-ui.md`, `_context/_arch/pattern-react.md`
-- Debugging: `_context/_arch/lessons-1.md`, `_context/_arch/lessons-2.md`
+- Debugging/errors: **`_context/_arch/core-architecture/lessons-learned.md`** (FIRST — check here for known SDK wiring issues), then `_context/_arch/lessons-1.md`, `_context/_arch/lessons-2.md`
 - General learnings: `_context/_arch/learning-backend.md`, `_context/_arch/learning-frontend.md`
-- Cadra-specific: `_context/cadra/_arch/learning-backend.md`, `_context/cadra/_arch/learning-frontend.md`
+- Cadra-specific: `_context/_arch/learning-backend.md`, `_context/cadra/_arch/learning-frontend.md`
 
 ### Phase 4: Feature-Specific
 8. Grep existing extension patterns in `cadra-web/src/extensions/` before writing code

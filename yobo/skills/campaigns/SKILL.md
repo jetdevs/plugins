@@ -1,6 +1,6 @@
 ---
 name: campaigns
-description: Use when working on campaign management, campaign planning, campaign execution, creative generation, multi-channel delivery, campaign events, or promotion messaging in yobo-merchant. Also use when the user mentions "campaign", "creative", "promotion message", or "campaign plan".
+description: Use when working on campaign management, campaign planning, campaign execution, creative generation, multi-channel delivery, campaign events, campaign detail page, promotion messaging, or campaign strategy in yobo-merchant. Also use when the user mentions "campaign", "creative", "promotion message", "campaign plan", "campaign detail", "campaign strategy", or "campaign tabs".
 ---
 
 # Campaign Management Development Guide
@@ -89,6 +89,44 @@ yobo-merchant/src/extensions/
 - Redemption rates
 - Cost per engagement
 - ROI calculation
+
+## Campaign Detail Page (GTM Design)
+
+### Route & Layout
+- List page: `src/app/(org)/campaigns/page.tsx` — card-based layout, Live/Other sections, search, kanban toggle
+- Detail page: `src/app/(no-sidebar)/campaigns/[uuid]/detail/page.tsx` — full-window, no sidebar
+- `(no-sidebar)` route group provides maximum screen real estate for detail/editor pages
+
+### 6-Tab Structure
+| Tab | Content | Source |
+|-----|---------|--------|
+| Home | Dashboard: LIVE banner, metric cards (Revenue/Redemptions/Outlets), Offers, Live Feed | `CampaignHomeView` from demo |
+| Ads | Messages/promotions: PromotionsList, PromotionDetailView, CampaignForm | Original campaigns-v2 |
+| Redemptions | Summary stat cards, redemption data | Campaign analytics |
+| Outlets | Outlet performance data | Campaign analytics |
+| Reports | CampaignAnalytics component | Existing |
+| Settings | Campaign info cards (sub-tabs: Matrix, Workflow, Offers) | Demo editor views |
+
+### Data Hook
+- `useCampaignDetail` from `src/app/(demo)/hooks/use-campaign-data.ts`
+- Calls: `api.campaigns.getByUuid`, `getAnalyticsByUuid`, `getOutletPerformance`, `getRedemptions`
+- Returns enriched data (offers, outlets, redemptions arrays) mapping directly to component props
+
+### Demo Migration Pattern
+- Export components from `src/app/(demo)/pages/` rather than copying — single source of truth
+- Demo components use `onNavigate` callback — map to `setActiveTab` or `router.push`
+- Demo components use `@ts-nocheck` and custom `Icons` — use `@ts-ignore` on import in production
+
+### Add New Campaign
+- "Add New" button opens `CreateCampaignDialog` (not router.push to `/ai-planning`)
+- Import from `src/extensions/campaigns/components/create-campaign-dialog.tsx`
+- On success: navigate to `/campaigns/{uuid}/detail`
+
+## Sticky Positioning in Scroll Containers
+
+- When `<main overflow-y-auto>` is the scroll container (not window), `sticky top-{X}` is relative to the scroll container
+- If scroll container starts at 64px (top nav), use `sticky top-0` — it sticks at viewport y=64 automatically
+- Scroll listeners must target `main[tabindex="-1"]`, not `window`
 
 ## Key Patterns
 

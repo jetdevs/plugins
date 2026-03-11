@@ -1,6 +1,6 @@
 ---
 name: yobo-dev
-description: Use this agent for developing the Yobo Merchant platform (yobo-merchant). This agent specializes in campaign management, customer loyalty, segmentation, workflow automation, AI copilot, offers/promotions, merchant onboarding, and the @jetdevs/* SDK stack.\n\nExamples:\n- <example>\n  Context: User wants to add a new campaign feature\n  user: "Add multi-channel scheduling to campaigns"\n  assistant: "I'll use the yobo-dev agent to implement campaign scheduling following the extension pattern"\n  <commentary>\n  Campaign features require understanding of the campaign extension, workflow integration, and channel delivery. Use yobo-dev.\n  </commentary>\n</example>\n- <example>\n  Context: User needs to fix customer segmentation\n  user: "The segment calculation job is timing out on large datasets"\n  assistant: "I'll use the yobo-dev agent to optimize the segment calculation"\n  <commentary>\n  Customer segmentation requires understanding of BullMQ jobs, segment engine, and performance patterns. Use yobo-dev.\n  </commentary>\n</example>\n- <example>\n  Context: User wants to add a new merchant module\n  user: "Add a referral program extension"\n  assistant: "I'll use the yobo-dev agent to create the extension following SDK patterns"\n  <commentary>\n  New extensions require understanding of createRouterWithActor, RLS, permissions, and the module checklist. Use yobo-dev.\n  </commentary>\n</example>
+description: Use this agent for developing the Yobo Merchant platform (yobo-merchant). This agent specializes in campaign management, customer loyalty, segmentation, workflow automation, AI copilot, offers/promotions, merchant onboarding, billing/subscriptions, CMS microsites, API key management, and the @jetdevs/* SDK stack.\n\nExamples:\n- <example>\n  Context: User wants to add a new campaign feature\n  user: "Add multi-channel scheduling to campaigns"\n  assistant: "I'll use the yobo-dev agent to implement campaign scheduling following the extension pattern"\n  <commentary>\n  Campaign features require understanding of the campaign extension, workflow integration, and channel delivery. Use yobo-dev.\n  </commentary>\n</example>\n- <example>\n  Context: User needs to fix customer segmentation\n  user: "The segment calculation job is timing out on large datasets"\n  assistant: "I'll use the yobo-dev agent to optimize the segment calculation"\n  <commentary>\n  Customer segmentation requires understanding of BullMQ jobs, segment engine, and performance patterns. Use yobo-dev.\n  </commentary>\n</example>\n- <example>\n  Context: User wants to add a new merchant module\n  user: "Add a referral program extension"\n  assistant: "I'll use the yobo-dev agent to create the extension following SDK patterns"\n  <commentary>\n  New extensions require understanding of createRouterWithActor, RLS, permissions, and the module checklist. Use yobo-dev.\n  </commentary>\n</example>\n- <example>\n  Context: User wants to work on the Stripe billing system\n  user: "The subscription upgrade isn't confirming the payment"\n  assistant: "I'll use the yobo-dev agent to debug the Stripe billing flow"\n  <commentary>\n  Billing requires understanding of Stripe Elements, PaymentElement, webhook handlers, and the billing extension. Use yobo-dev.\n  </commentary>\n</example>\n- <example>\n  Context: User wants to build or fix a microsite landing page\n  user: "Add a testimonial component to the Puck editor for microsites"\n  assistant: "I'll use the yobo-dev agent to add the Puck component following the microsites extension pattern"\n  <commentary>\n  Microsites require understanding of the Puck visual editor, SSR rendering, public routes, and the microsites extension. Use yobo-dev.\n  </commentary>\n</example>\n- <example>\n  Context: User is debugging navigation or loading state issues\n  user: "Pages are showing double loading spinners before content appears"\n  assistant: "I'll use the yobo-dev agent to fix the loading state hierarchy"\n  <commentary>\n  Loading state issues require understanding of AuthGuard, Secure.Container, Suspense boundaries, and Next.js layout nesting. Use yobo-dev.\n  </commentary>\n</example>
 model: opus
 color: yellow
 ---
@@ -29,6 +29,7 @@ Invoke these skills when relevant:
 ```
 yobo-merchant/src/
   extensions/              # 45+ domain modules
+    billing/               # Stripe billing & subscriptions (Plans, PaymentElement, webhooks)
     campaigns/             # Campaign management & execution
     campaign-plan/         # AI-assisted campaign planning
     campaign-events/       # Campaign event tracking
@@ -53,6 +54,7 @@ yobo-merchant/src/
     ai/                    # AI API integration
     copilot-demo/          # Demo copilot experience
     creatives/             # Creative asset management
+    microsites/            # CMS visual page builder (Puck editor, SSR, form submissions)
     whatsapp-auth/         # WhatsApp authentication
     onboarding/            # Merchant onboarding flow
     onboarding-gtm/        # GTM-specific onboarding
@@ -65,6 +67,7 @@ yobo-merchant/src/
     moka/ & moka-pos/      # POS integrations
     queue-monitor/         # BullMQ job monitoring
     mission-control/       # Admin control panel
+    strategies/            # Campaign strategy detail & generation status tracking
   app/
     (org)/                 # Org-authenticated pages (30+ routes)
     (auth)/                # Auth pages (login, register)
@@ -205,6 +208,13 @@ return withApiAuth(request, async (req, apiContext) => {
 | UI patterns | `_context/yobo-merchant/_arch/pattern-ui.md` |
 | React patterns | `_context/yobo-merchant/_arch/pattern-react.md` |
 | Scripts guide | `_context/yobo-merchant/_wiki/feature-scripts.md` |
+| **New Modules** | |
+| Billing/Stripe | `yobo-merchant/src/extensions/billing/` (router, repository, components) |
+| API Keys | `yobo-merchant/src/components/settings/ApiKeySettings.tsx` |
+| Microsites/CMS | `yobo-merchant/src/extensions/microsites/` (Puck editor, SSR renderer) |
+| CMS specs | `_context/yobo-merchant/max-cms/specs.md` |
+| **Navigation/Loading** | |
+| PWA native UX | `_context/_arch/pwa-native-app-ux.md` |
 
 ## Hard-Won Lessons & Gotchas (from _ai/sessions/)
 
@@ -244,6 +254,14 @@ return withApiAuth(request, async (req, apiContext) => {
 
 8. **Assert actual data content in tests**, not just page shell presence — Pages gracefully show "Not Found" instead of error toast.
 
+9. **Use ONE loading state per page transition** — Never stack AuthGuard spinner + Suspense fallback + Secure.Container skeleton. AuthGuard should render `null` by default; Secure.Container skeleton is sufficient.
+
+10. **NEVER use `force-dynamic` on root or org layouts** — Forces every client-side navigation to make a fresh server round-trip including DB connections on Vercel serverless. Use `unstable_cache` with short revalidation (60s) instead.
+
+11. **Logo and default redirects must point to `/dashboard`**, not `/` — The root `app/page.tsx` has `getServerSession()` + DB queries that hang on Vercel cold starts.
+
+12. **Only ONE `next.config` file may exist** — Next.js 15 prioritizes `.ts` over `.mjs`. An empty `next.config.ts` stub silently disables ALL optimizations from `next.config.mjs`.
+
 ### SDK & Framework Integration
 
 - **root.ts SDK wiring**: `createUserRepositoryClass()` in `src/server/api/root.ts` MUST include `orgMembers` from `@jetdevs/core/db/schema`. Missing it causes intermittent `SDKUserRepository: orgMembers schema is required` errors (only when org context is active). See lessons-learned.md #24.
@@ -254,6 +272,9 @@ return withApiAuth(request, async (req, apiContext) => {
 - **Core vs Extension**: auth, users, roles, permissions, themes, org, user-org, api-keys, system-config are CORE (import from @jetdevs SDK). Everything else is an extension.
 - **Drizzle cross-package types**: Use type assertion helpers (`ref()`, `tbl()`, `col()`) for version mismatch errors.
 - **Drizzle migration in monorepo**: Use programmatic API (`drizzle-orm/postgres-js/migrator`), NOT drizzle-kit CLI (resolves wrong version from pnpm store).
+- **SDK API keys `crossOrg: true` leaks data**: SDK's default list handler calls `listAll()` for superusers. Always override with `listByOrgId(service.orgId)` in the app's `root.ts` for strict org isolation.
+- **`type="submit"` inside Radix Dialog fails**: Use `type="button"` with explicit `onClick={form.handleSubmit(handler)}` instead.
+- **`@jetdevs/cloud/storage` vs `@jetdevs/cloud`**: The `storage` module requires Credentials Service (STS tokens, `YOBO_SDK_CREDENTIALS_API_URL`). Use legacy `@jetdevs/cloud` (`uploadFileToS3`, env-based AWS creds) until Credentials Service is deployed. Check import path first when S3 uploads fail.
 
 ### Onboarding Flow (CRITICAL)
 
@@ -299,6 +320,10 @@ return withApiAuth(request, async (req, apiContext) => {
 - **Tool permissions**: Use callback-style slugs (`campaigns:read`, `campaign:create`), NOT frontend-style (`org:settings:read`). Check `tool-permissions.ts`.
 - **Cache invalidation with `call_tool`**: All invocations share key "call_tool" — never classify as read-only. Over-invalidation is cheap.
 - **Session feedback loop**: Track internally-created sessions with `internallyCreatedSessionRef` to prevent infinite loading.
+- **NEVER pass `teamUuid` to programmatic `agents.execute()` calls** — `teamUuid` routes to team's lead orchestrator (which only has meta-tools, not merchant external tools). Pass agent UUID directly. `teamUuid` is for playground team execution only.
+- **Always implement sync fallback for async agent execution** — `agents.execute()` is fire-and-forget. If agent doesn't call status update tool, record stays stuck. Implement `syncExecutionStatus` that polls `agents.getExecution(executionId)` and syncs to DB.
+- **Preserve JSONB metadata on retry** — Always merge with existing metadata (`{ ...existingMetadata, ...newFields }`). Never overwrite — existing metadata may contain `fullProposal`, `overallPlan`, `retryCount`.
+- **Retry must UPDATE existing record, not INSERT new** — If retry creates a new row, the UI polling the original UUID stays stuck forever.
 
 ### Testing Patterns
 

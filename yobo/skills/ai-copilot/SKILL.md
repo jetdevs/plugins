@@ -1,6 +1,6 @@
 ---
 name: ai-copilot
-description: Use when working on AI copilot features, Cadra SDK integration, AI agent orchestration, AI-powered campaign planning, creative generation, customer analysis, AI API service, or AI prompt management in yobo-merchant. Also use when the user mentions "copilot", "ai agent", "cadra", "ai planning", "ai analysis", "gemini", or "ai-api".
+description: Use when working on AI copilot features, Cadra SDK integration, AI agent orchestration, AI-powered campaign planning, creative generation, customer analysis, AI API service, AI prompt management, agent execution sync, or LLM output normalization in yobo-merchant. Also use when the user mentions "copilot", "ai agent", "cadra", "ai planning", "ai analysis", "gemini", "ai-api", "agent execution", "tool verbosity", or "strArr".
 ---
 
 # AI Copilot & Agent Integration Guide
@@ -148,6 +148,49 @@ ai.optimization // Performance optimization suggestions
 // 4. Store S3 URL in creative record
 // S3 bucket priority: S3_BUCKET → NEXT_PUBLIC_S3_BUCKET → AWS_BUCKET_NAME
 ```
+
+## Cadra Agent Execution (CRITICAL)
+
+### Programmatic API vs Playground
+```typescript
+// CORRECT: Pass agent UUID directly for programmatic calls
+await client.agents.execute(CADRA_AGENTS.CAMPAIGN_STRATEGIST, { task, context });
+
+// WRONG: teamUuid routes to team orchestrator (only has meta-tools)
+await client.agents.execute(agentId, { task, context, teamUuid: CADRA_TEAMS.CAMPAIGN });
+```
+
+- `teamUuid` is for playground team execution ONLY. Programmatic calls must pass agent UUID directly.
+- Team orchestrators (e.g., Campaign PM) only have meta-tools (`update_task_list`, `handoff_to_agent`) — they cannot call merchant external tools (`create_campaign`, `create_offer`).
+- Agent UUIDs: `yobo-merchant/src/lib/cadra/agents.ts`
+- Tool registry: `yobo-merchant/src/server/tools/tool-registry.ts`
+- Tool callback route: `yobo-merchant/src/app/api/v1/internal/tools/route.ts`
+
+### Async Execution & Status Sync
+- `agents.execute()` is fire-and-forget — returns `executionId` immediately
+- Agent updates host app via tool callbacks (e.g., `update_strategy_status`)
+- If agent never calls the status tool, record stays stuck forever
+- Always implement a `syncExecutionStatus` fallback that polls `agents.getExecution(executionId)` and syncs to DB
+- UI should auto-poll sync (10s interval) after 30s of no progress
+- Post-retry: schedule a delayed sync (30s) as safety net
+
+### Retry & Recovery Rules
+- Retry must UPDATE existing record, not INSERT new — UI polls original UUID
+- Always merge JSONB metadata on retry: `{ ...existingMetadata, ...newFields }`
+- Never overwrite metadata — contains `fullProposal`, `overallPlan`, `retryCount`
+- "Resume" buttons must check terminal state first — avoid infinite restart loops
+- For "incomplete but usable" results, use informational banners (no action buttons)
+
+### LLM Output Defense
+- LLM outputs are unpredictable. Any `string[]` may actually contain objects.
+- `arr()` (checks `Array.isArray`) is insufficient — use `strArr()` that coerces items
+- Server normalization fixes only apply to NEW data — Zustand persist caches old shapes
+- Triple-layer defense: server `strArr()` + client `toStr()` + optional chaining
+
+### Key Files
+- Campaign plan service: `yobo-merchant/src/server/services/domain/campaign-plan.service.ts`
+- Strategy detail UI: `yobo-merchant/src/extensions/strategies/components/PlanDetailContent.tsx`
+- Onboarding service normalization: `yobo-merchant/src/server/services/domain/onboarding.service.ts` (line ~1380)
 
 ## Reference Documentation
 

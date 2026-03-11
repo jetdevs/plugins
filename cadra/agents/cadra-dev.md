@@ -1,6 +1,6 @@
 ---
 name: cadra-dev
-description: Use this agent for developing the CadraOS AI SaaS platform (cadra-web). This agent specializes in the AI agent orchestration platform, tRPC extensions, OpenAPI REST endpoints, SDK integration, agent execution optimization, and the @jetdevs/* SDK stack.\n\nExamples:\n- <example>\n  Context: User needs to add a new REST API endpoint\n  user: "Add a webhooks API endpoint at /api/v1/webhooks"\n  assistant: "I'll use the cadra-dev agent to implement the endpoint following OpenAPI patterns"\n  <commentary>\n  REST API development requires understanding of withApiAuth, withPrivilegedDb, and permission patterns. Use cadra-dev.\n  </commentary>\n</example>\n- <example>\n  Context: User wants to optimize agent execution\n  user: "Agent executions are too slow, can we batch the tool calls?"\n  assistant: "I'll use the cadra-dev agent to implement batch tool execution"\n  <commentary>\n  Agent execution optimization requires understanding of the tool executor, SSE streaming, and parallelization patterns. Use cadra-dev.\n  </commentary>\n</example>\n- <example>\n  Context: User needs to add a new extension module\n  user: "Add a notifications extension to cadra-web"\n  assistant: "I'll use the cadra-dev agent to create the extension following SDK patterns"\n  <commentary>\n  Extension development requires understanding of createRouterWithActor, RLS, permissions, and the extension file structure. Use cadra-dev.\n  </commentary>\n</example>
+description: Use this agent for developing the CadraOS AI SaaS platform (cadra-web). This agent specializes in the AI agent orchestration platform, tRPC extensions, OpenAPI REST endpoints, SDK integration, agent execution optimization, billing/credits, internationalization, dashboard, and the @jetdevs/* SDK stack.\n\nExamples:\n- <example>\n  Context: User needs to add a new REST API endpoint\n  user: "Add a webhooks API endpoint at /api/v1/webhooks"\n  assistant: "I'll use the cadra-dev agent to implement the endpoint following OpenAPI patterns"\n  <commentary>\n  REST API development requires understanding of withApiAuth, withPrivilegedDb, and permission patterns. Use cadra-dev.\n  </commentary>\n</example>\n- <example>\n  Context: User wants to optimize agent execution\n  user: "Agent executions are too slow, can we batch the tool calls?"\n  assistant: "I'll use the cadra-dev agent to implement batch tool execution"\n  <commentary>\n  Agent execution optimization requires understanding of the tool executor, SSE streaming, and parallelization patterns. Use cadra-dev.\n  </commentary>\n</example>\n- <example>\n  Context: User needs to add a new extension module\n  user: "Add a notifications extension to cadra-web"\n  assistant: "I'll use the cadra-dev agent to create the extension following SDK patterns"\n  <commentary>\n  Extension development requires understanding of createRouterWithActor, RLS, permissions, and the extension file structure. Use cadra-dev.\n  </commentary>\n</example>\n- <example>\n  Context: User needs to work on billing or subscription features\n  user: "Add a new subscription plan with Stripe integration"\n  assistant: "I'll use the cadra-dev agent to implement the subscription plan following billing patterns"\n  <commentary>\n  Billing work requires understanding of Stripe integration, subscription plans, credits system, and billing extension. Use cadra-dev.\n  </commentary>\n</example>\n- <example>\n  Context: User needs to add translations or fix i18n issues\n  user: "Add i18n support to the new settings page"\n  assistant: "I'll use the cadra-dev agent to add translation keys and update locale files"\n  <commentary>\n  i18n work requires understanding of next-intl patterns, namespace conventions, and locale file management. Use cadra-dev.\n  </commentary>\n</example>\n- <example>\n  Context: User needs to fix the agent detail page or playground chat\n  user: "The agent chat shows duplicate responses"\n  assistant: "I'll use the cadra-dev agent to fix the PlaygroundChat streaming dedup"\n  <commentary>\n  PlaygroundChat has critical streaming patterns (atomic state updates, SSE+polling dedup, session ID loop) that require deep knowledge. Use cadra-dev.\n  </commentary>\n</example>\n- <example>\n  Context: User wants to update the dashboard or UI components\n  user: "Add a new stat card to the dashboard"\n  assistant: "I'll use the cadra-dev agent to update the dashboard following the aggregated tRPC endpoint pattern"\n  <commentary>\n  Dashboard uses a single getDashboardSummary endpoint and specific UI patterns. Use cadra-dev.\n  </commentary>\n</example>
 model: opus
 color: cyan
 ---
@@ -14,8 +14,10 @@ Be concise. Fragments OK. Code > words. No greetings or filler.
 ## Skills Available
 
 Invoke these skills when relevant:
-- `cadra:agents-playground` — Agents, teams, execution runtime, playground, tools, prompts, artifacts, knowledge bases
-- `cadra:platform-infra` — Custom domains, permissions, users/roles, subscriptions, metering, audits, RLS
+- `cadra:agents-playground` — Agents, teams, execution runtime, playground, agent detail page, dashboard, tools, prompts, artifacts, knowledge bases
+- `cadra:platform-infra` — Custom domains, permissions, users/roles, subscriptions, metering, audits, RLS, theming, dark mode, Google OAuth
+- `cadra:billing-subscriptions` — Billing UI, credits, Stripe integration, subscription plans, site license, payment flows
+- `cadra:i18n` — Internationalization, next-intl, translations, locale management, RTL support
 - `cadra:sdk-refactor` — CadraOS SDK adapter, SSE streaming, chat components
 - `cadra:open-api` — REST API endpoints, withApiAuth, withPrivilegedDb
 - `cadra:agent-execution` — Agent performance optimization, batch tools, parallel delegation
@@ -29,7 +31,7 @@ Invoke these skills when relevant:
 ```
 cadra-web/src/
   extensions/          # All domain features as extensions
-    agents/            # AI agents, teams, executions
+    agents/            # AI agents, teams, executions + detail page UX
     artifacts/         # Agent-generated files
     skills/            # Skill templates
     tools/             # External integrations (REST, MCP)
@@ -41,9 +43,17 @@ cadra-web/src/
     decisioning/       # Decision tables
     projects/          # Project organization
     custom-domains/    # White-label domains
-  app/api/v1/          # REST API endpoints
+    billing/           # Subscription plans, Stripe integration
+    credits/           # Credit system (5 tables)
+  app/
+    api/v1/            # REST API endpoints
+    (org)/workforce/   # Agent detail, team detail, executions
+    dashboard/         # Operational dashboard
+    (org)/settings/    # Settings with billing tab
   server/api/          # tRPC routers
   permissions/         # RBAC registry (97 permissions, 18 modules)
+  i18n/                # next-intl v4 config
+  translations/        # 13 locale files, 2721+ keys
 ```
 
 ## Key Patterns
@@ -77,6 +87,18 @@ return withApiAuth(request, async (req, apiContext) => {
 ### Database: Always ADMIN_DATABASE_URL for direct queries
 ### RLS: `rls.current_org_id` (NOT `app.current_org_id`)
 ### Permissions: Register → `pnpm generate:seed-permissions` → `pnpm db:seed:rbac` → re-login
+### Type Safety: `(api as any).routerName.*` for createRouterWithActor tRPC calls
+
+### Performance
+- PlaygroundChat (~6000+ lines): ALWAYS dynamic import
+- ReactFlow (~500KB), ECharts (~800KB), CodeMirror (~400KB): always lazy-load
+- Dashboard: single aggregated tRPC endpoint over multiple parallel queries
+- Postgres decimals return strings — coerce with `Number()`
+
+### i18n
+- next-intl v4, cookie-based locale, deepMerge English fallback
+- Translations at `src/translations/` (MUST be inside src/ for Vercel)
+- ICU `{{var}}` must be escaped as `'{{var}}'`
 
 ## Context Loading
 
@@ -151,7 +173,12 @@ return withApiAuth(request, async (req, apiContext) => {
 | Audits | `_context/cadra/audits/p1-audit-for-fallbacks/` |
 | Sandbox | `_context/cadra/sandbox/{specs,prd,implementation}-sandbox.md` |
 | QA suite | `_context/cadra/qa-suite/` |
-| Reminders | `_context/cadra/reminders/` |
+| **Billing & Credits** | |
+| Billing extension | `cadra-web/src/extensions/billing/` |
+| Credits extension | `cadra-web/src/extensions/credits/` |
+| Subscription seeds | `cadra-web/src/db/seeds/seed-subscription-plans.ts` |
+| Stripe setup | `cadra-web/scripts/setup-stripe-prices.ts` |
 | **Cross-App** | |
 | Design Studio | `_context/slides/design-studio/{feature,specs,prd}.md` |
 | Core SDK | `_context/cadra/core-saas-sdk/` |
+| Performance guide | `_context/_arch/guide-performance.md` |

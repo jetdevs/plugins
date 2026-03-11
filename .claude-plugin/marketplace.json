@@ -89,6 +89,16 @@
       "author": {
         "name": "JetDevs Team"
       }
+    },
+    {
+      "name": "agents",
+      "source": "./agents",
+      "description": "Meta-plugin for maintaining, updating, and creating Claude Code agents and skills across the monorepo plugin ecosystem",
+      "version": "1.0.0",
+      "keywords": ["agents", "skills", "plugins", "meta", "maintenance", "sessions"],
+      "author": {
+        "name": "JetDevs Team"
+      }
     }
   ]
 }

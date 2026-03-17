@@ -1,6 +1,6 @@
 ---
 name: test-specs
-description: "Run smoke, regression, and integration tests for a completed spec implementation. This skill should be used when the user asks to \"test specs\", \"run tests for specs\", \"verify implementation\", \"test my stories\", \"run smoke tests\", \"check spec tests\", or when develop-specs completed but testing was skipped or incomplete. Also use when the user mentions \"test the feature\", \"verify stories pass\", or \"run the testing protocol\"."
+description: Run smoke, regression, and integration tests for a completed spec implementation. This skill should be used when the user asks to test specs, run tests for specs, verify implementation, test my stories, run smoke tests, check spec tests, or when develop-specs completed but testing was skipped or incomplete. Also use when the user mentions test the feature, verify stories pass, or run the testing protocol.
 ---
 
 # Test Specs

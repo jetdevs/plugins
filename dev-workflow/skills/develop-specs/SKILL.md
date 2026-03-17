@@ -1,6 +1,6 @@
 ---
 name: develop-specs
-description: Implements features using the Anthropic Agent Harness Protocol with story_list.json tracking. Use when developing features from specs, implementing user stories, or resuming work on a feature. Provides atomic task execution with git commits and verification.
+description: Implements features by writing code guided by story_list.json tracking. Use when developing features from specs, implementing user stories, or resuming implementation work. NOT for reviewing or creating specs — use create-specs or spec-feedback-reviewer for that. Provides atomic task execution with git commits and verification.
 ---
 
 # Develop Specs
@@ -14,6 +14,24 @@ The agent completes ONE story at a time, verifies it with tests, updates the sto
 1. **Atomic Progress**: Each commit represents a verified, working increment
 2. **Resumability**: Any new agent instance can read story_list.json and continue
 3. **Accountability**: All changes are tracked with verification status
+
+## Phase Gate: Implementation vs Review
+
+**Before modifying ANY `done`, `verified`, `passes`, or `status` field, you MUST confirm you are in IMPLEMENTATION mode.**
+
+You are in **IMPLEMENTATION mode** ONLY if ALL three are true:
+1. You **wrote source code** in this session (not just JSON, markdown, or documentation)
+2. You **ran tests or verification** in this session and observed real output
+3. You **will create a git commit** with source code changes
+
+If ANY of the above is false, you are in **REVIEW mode**. In review mode:
+- You MAY update `status` to `"in_progress"` or `"blocked"`
+- You MAY add items to `blockers`
+- You MAY read and analyze stories for planning purposes
+- You MUST NOT set `done: true`, `verified: true`, or `passes: true`
+- You MUST NOT set `status` to `"testing"` or `"passes"`
+
+**This gate exists because**: Stories were previously marked `passes: true` during spec review sessions where zero code was written, creating false progress signals.
 
 ## Instructions
 
@@ -51,11 +69,29 @@ Also read relevant architecture docs:
 .context/{project}/_arch/
   - patterns-*.md    # Coding patterns to follow
   - learning-*.md    # Project-specific knowledge
+
+_context/_arch/
+  - patterns-testing.md  # REQUIRED — testing rules (no DB mocks, error monitoring, smoke/regression patterns)
 ```
 
 ### Step 3: Implement ONE Story
 
 **CRITICAL**: Only work on ONE story at a time. Never implement multiple stories before committing.
+
+#### Status Progression (MUST follow this order)
+
+```
+pending -> in_progress -> testing -> passes
+                 \-> blocked (at any point)
+```
+
+- **pending**: No work started. All `done`/`verified` fields are `false`. `passes` is `false`.
+- **in_progress**: Code is being written. Some `done` fields may be `true`. `passes` MUST be `false`.
+- **testing**: All code is written, running verification. Some `verified` fields may be `true`. `passes` MUST be `false`.
+- **passes**: ALL `done: true`, ALL `verified: true`, `commits` array non-empty with real hashes, tests executed with observed output.
+- **blocked**: Cannot proceed. Document in `blockers` array.
+
+**NEVER skip statuses.** You cannot go from `pending` to `passes` or from `in_progress` to `passes` without going through `testing`.
 
 #### 3a. Mark Story as In Progress
 
@@ -82,39 +118,177 @@ Example definition_of_done items:
 - Unit tests passing -> Write and run tests
 - UI components built -> Create React components
 
-#### 3c. Verify Acceptance Criteria
+#### 3c. Testing Protocol (Required Before `passes`)
 
-For each item in `acceptance_criteria`:
+When all DoD items are done, set `status: "testing"` and follow this protocol. Testing follows the project's testing patterns (see `_context/_arch/patterns-testing.md`).
 
-1. Verify the criterion is met (run test or manual check)
-2. Mark `"verified": true` in story_list.json
-3. Note the `verification_method` used
+**Foundational rule: NEVER mock the database.** All tests must run against real PostgreSQL. Mocked DB tests are not tests — they verify mock behavior, not application behavior.
 
-**IMPORTANT**: Use the verification_script if specified:
+##### Step 1: Discover Existing Tests
+
+Before writing new tests, understand what already exists:
+
 ```bash
-# Run the specific test file
-pnpm test:e2e {verification_script}
+# Find existing test files for this module/feature
+find src/test -name "*.spec.ts" | grep -i {feature}
+find src/test -name "*.test.ts" | grep -i {feature}
 
-# Or run unit tests
-pnpm test:unit --testPathPattern={feature}
+# Check smoke test page array — is the new page already listed?
+grep -n "{route-path}" src/test/e2e/smoke*.spec.ts
+
+# Check regression tests — do they cover this module?
+ls src/test/e2e/regression/
 ```
+
+Determine:
+- Which test files already exist and what they cover
+- Which new tests are needed for the changes in this story
+- Which existing tests need updating due to the changes (new routes, renamed fields, changed behavior)
+
+##### Step 2: Run Smoke Tests (Page Load Verification)
+
+Smoke tests verify: **"Does every page load without crashing?"**
+
+If this story adds or modifies a page route:
+
+1. **Add the new page to the smoke test PAGES array** (if not already present):
+```typescript
+// In smoke-pages.spec.ts or equivalent
+{ name: 'My Feature', path: '/my-feature' },
+{ name: 'My Feature Detail', path: '/my-feature/[uuid]' }, // if applicable
+```
+
+2. **Run smoke tests** and verify the new page loads without errors:
+```bash
+pnpm test:e2e --grep "smoke"
+# OR
+pnpm playwright test smoke-pages.spec.ts
+```
+
+3. **What smoke tests check** (all five must pass):
+   - HTTP status < 500
+   - No Next.js error overlay visible
+   - No `console.error` messages (using denylist filtering, NOT allowlist)
+   - No per-procedure failures in tRPC batch response bodies
+   - No uncaught JS errors (`pageerror` events)
+
+##### Step 3: Run or Write Regression Tests (Interaction Verification)
+
+Regression tests verify: **"Do all user interactions work without errors?"** They cover three levels:
+
+| Level | What it catches | Example |
+|-------|----------------|---------|
+| **Page load** | API errors on initial render | `loyalty.get` 500 on customers page |
+| **Detail navigation** | API errors when clicking into detail | `customers.getById` 500 on detail |
+| **Dialog interaction** | Errors inside modals/forms | `"Failed to load whitelist"` in edit dialog |
+
+For each level affected by this story:
+
+1. **Write or update the regression test** following these rules:
+   - Use `setupErrorMonitoring(page)` before first navigation
+   - Call `monitor.assertNoErrors()` after EVERY page load and interaction
+   - Use `waitForLoadState('networkidle')` before `assertNoErrors()`
+   - Assert actual data content, NOT page shell (`<main>`, `[role="main"]`)
+   - NEVER use `monitor.clear()` before `assertNoErrors()` (unless after a known 404 redirect)
+   - NEVER use `.catch(() => {})` on required element assertions
+
+2. **Run the regression tests**:
+```bash
+pnpm test:e2e --grep "{feature}"
+# OR
+pnpm playwright test regression/{feature}.spec.ts
+```
+
+3. **Record test output** — paste or summarize the actual test runner results.
+
+##### Step 4: Run Integration Tests (API Verification)
+
+If this story modifies tRPC procedures, database queries, or API endpoints:
+
+1. **Write or update integration tests** that hit a real PostgreSQL test database
+2. **Run them**:
+```bash
+pnpm test --testPathPattern={feature}
+# OR
+pnpm vitest run src/test/integration/{feature}
+```
+3. **Record test output**
+
+##### Step 5: Type Check
+
+```bash
+pnpm tsc --noEmit
+# OR
+pnpm typecheck
+```
+
+Record whether it passes clean or has errors.
+
+##### Step 6: Verify Acceptance Criteria
+
+NOW — with all tests passing — verify each `acceptance_criteria` item:
+
+For each item:
+1. Check the `verification_method` field
+2. Execute verification based on method:
+   - **`unit_test` / `integration_test` / `e2e_test`**: Reference the specific test that covers this criterion. If the test ran and passed in Steps 2-4, cite it. If no test covers it, WRITE one.
+   - **`manual`**: Describe what you checked and what you observed. "Looks correct" is NOT sufficient — describe the specific file, line, and behavior you verified.
+3. Set `"verified": true` ONLY after completing the above
+4. Add a `notes` field describing the evidence
+
+```json
+{
+  "item": "Uses createRouterWithActor pattern for tRPC router",
+  "verified": true,
+  "verification_method": "manual",
+  "notes": "Verified at src/extensions/my-feature/router.ts:15 — exports ActorRouterConfig, createRouterWithActor used in root.ts:42"
+}
+```
+
+**You MUST paste or summarize actual test runner output as evidence. "Tests should pass" is not verification.**
+
+##### Testing Checklist (All Must Be True Before `passes`)
+
+- [ ] Smoke tests pass for all affected pages
+- [ ] New pages added to smoke test PAGES array
+- [ ] Regression tests cover page load, detail navigation, and dialog interaction for affected modules
+- [ ] Integration tests pass against real PostgreSQL (NO mocked database)
+- [ ] Type check passes (`tsc --noEmit`)
+- [ ] All `acceptance_criteria` items have `verified: true` with evidence in `notes`
+- [ ] No `monitor.clear()` before `assertNoErrors()` in any test
+- [ ] No database mocks (`vi.mock("@/db/clients")`) in any test
 
 ### Step 4: Evaluate Completion
 
-A story can ONLY have `passes: true` when:
+A story can ONLY have `passes: true` when ALL SEVEN conditions are met:
 
 1. **ALL** `definition_of_done` items have `"done": true`
-2. **ALL** `acceptance_criteria` items have `"verified": true`
-3. **ALL** relevant tests pass
+2. **ALL** `acceptance_criteria` items have `"verified": true` with evidence in `notes`
+3. **Smoke tests** pass for all affected pages (new pages added to PAGES array)
+4. **Regression tests** exist and pass for affected modules (covering page load, detail nav, dialog interaction as applicable)
+5. **Integration tests** pass against real PostgreSQL (no mocked database)
+6. **Type check** passes (`tsc --noEmit` or `pnpm typecheck`)
+7. **At least one git commit** exists in the story's `commits` array with a real hash
 
 ```javascript
 // Pseudo-code for passes evaluation
 const allDoDDone = definition_of_done.every(item => item.done === true);
-const allACVerified = acceptance_criteria.every(item => item.verified === true);
-const passes = allDoDDone && allACVerified;
+const allACVerified = acceptance_criteria.every(item => item.verified === true && item.notes);
+const hasCommits = commits.length > 0 && commits.every(c => c.hash && c.hash !== "");
+const sourceFilesExist = files_to_modify.every(f => fs.existsSync(f));
+const smokeTestsPassed = /* ran smoke tests, observed passing output */;
+const regressionTestsPassed = /* ran regression tests, observed passing output */;
+const typeCheckPassed = /* ran tsc --noEmit, observed clean output */;
+const passes = allDoDDone && allACVerified && hasCommits && sourceFilesExist
+  && smokeTestsPassed && regressionTestsPassed && typeCheckPassed;
 ```
 
-**If ANY item is false, passes MUST be false.**
+**HARD RULES**:
+- If ANY `done` or `verified` item is false → `passes` MUST be false
+- If `commits` array is empty → `passes` CANNOT be true (no commits = no code = no passes)
+- If `status` is not `"testing"` or `"passes"` → `passes` CANNOT be true (must go through status progression)
+- If you did not run the Testing Protocol (Step 3c) in this session → `passes` CANNOT be true
+- If any `verified` item lacks a `notes` field with evidence → `passes` CANNOT be true
 
 ### Step 5: Update story_list.json
 
@@ -202,10 +376,18 @@ If all stories complete:
 ```
 READ story_list.json
   -> Find next story with passes: false
-  -> Read specs/docs
+  -> Read specs/docs + _arch/patterns-testing.md
+  -> Set status: "in_progress"
   -> Implement (working through DoD items)
-  -> Run tests (verify AC items)
-  -> ALL DoD done? ALL AC verified?
+  -> Set status: "testing"
+  -> TESTING PROTOCOL:
+     1. Discover existing tests (find affected smoke/regression/integration tests)
+     2. Run smoke tests (add new pages to PAGES array if needed)
+     3. Write/update regression tests (page load, detail nav, dialog interaction)
+     4. Run integration tests against real PostgreSQL
+     5. Run type check (tsc --noEmit)
+     6. Verify each AC item with evidence
+  -> ALL DoD done? ALL AC verified? ALL tests passing?
      -> YES: Set passes: true, COMMIT, update log
      -> NO: Fix issues, do NOT set passes: true
   -> REPEAT until all stories pass
@@ -296,16 +478,39 @@ When a test fails:
 ### NEVER Do These:
 - Set `passes: true` if ANY DoD item has `"done": false`
 - Set `passes: true` if ANY AC item has `"verified": false`
+- Set `passes: true` when the `commits` array is empty
+- Set `passes: true` without running the Testing Protocol (smoke + regression + integration + typecheck)
+- Set `done: true` on DoD items without having written actual source code
+- Set `verified: true` on AC items without running the verification_method and observing output
+- Set `verified: true` without adding a `notes` field with evidence
+- Change any completion fields (`done`/`verified`/`passes`) during spec review, planning, or documentation-only sessions
+- Skip statuses (e.g., `pending` directly to `passes`)
+- Mock the database in tests (`vi.mock("@/db/clients")` or similar)
+- Use `monitor.clear()` before `assertNoErrors()` to suppress real errors
+- Use allowlist error monitoring (catch only known patterns) — always use denylist (catch all, filter safe noise)
 - Implement multiple stories before committing
 - Skip the commit step after completing a story
 - Modify completed stories (passes: true) unless fixing bugs
 
 ### ALWAYS Do These:
 - Read story_list.json before starting work
+- Read `_context/_arch/patterns-testing.md` before writing any tests
+- Confirm you are in IMPLEMENTATION mode (wrote code, ran tests, will commit) before touching completion fields
+- Follow status progression: `pending -> in_progress -> testing -> passes`
 - Update status to "in_progress" when starting
+- Update status to "testing" before running the Testing Protocol
+- Discover existing tests before writing new ones (check smoke array, regression files, integration tests)
+- Add new pages to smoke test PAGES array in the same story that creates the page
+- Write regression tests that cover all three levels (page load, detail nav, dialog) for affected modules
+- Run tests against real PostgreSQL — never mock the database
+- Use `setupErrorMonitoring(page)` + denylist approach in all E2E tests
+- Wait for `networkidle` before `assertNoErrors()` in E2E tests
+- Assert actual data content, not page shell visibility
 - Check ALL DoD and AC items before setting passes
+- Record evidence (test output, manual check details) in `notes` field when setting `verified: true`
 - Include commit hash in the story after committing
 - Update the "updated" date in story_list.json
+- Update implementation.md progress after completing a story
 
 ## Integration with Existing Workflow
 

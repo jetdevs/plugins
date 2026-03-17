@@ -22,10 +22,10 @@
         "Connect UI to API endpoints"
       ],
       "definition_of_done": [
-        { "item": "Code complete and compiles without errors", "done": false },
+        { "item": "Code complete and compiles without errors (pnpm build passes)", "done": false },
         { "item": "Unit tests written and passing (>80% coverage)", "done": false },
         { "item": "Integration tests written and passing", "done": false },
-        { "item": "Code review completed", "done": false },
+        { "item": "No TypeScript errors in changed files (tsc --noEmit passes)", "done": false },
         { "item": "Documentation updated", "done": false }
       ],
       "acceptance_criteria": [
@@ -56,10 +56,10 @@
         "Implement retry logic for failed requests"
       ],
       "definition_of_done": [
-        { "item": "Code complete and compiles without errors", "done": false },
+        { "item": "Code complete and compiles without errors (pnpm build passes)", "done": false },
         { "item": "Edge case unit tests written and passing", "done": false },
         { "item": "E2E tests cover error scenarios", "done": false },
-        { "item": "Code review completed", "done": false }
+        { "item": "No TypeScript errors in changed files (tsc --noEmit passes)", "done": false }
       ],
       "acceptance_criteria": [
         { "item": "Uses standard error boundary pattern from design system", "verified": false, "verification_method": "manual" },

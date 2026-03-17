@@ -349,6 +349,18 @@ Consolidation:
 
 **IMPORTANT**: This file enables the Anthropic Agent Harness Protocol for reliable feature development across context resets.
 
+#### Initialization Rules (CRITICAL)
+
+When create-specs generates a story_list.json, ALL stories MUST have these exact initial values:
+- `"status": "pending"` — NEVER `"in_progress"`, `"testing"`, or `"passes"`
+- `"passes": false` — NEVER `true` (no code has been written yet)
+- `"commits": []` — ALWAYS empty (no commits exist yet)
+- `"blockers": []` — empty unless there are known blockers
+- ALL `definition_of_done` items: `"done": false`
+- ALL `acceptance_criteria` items: `"verified": false`
+
+**Why**: The `done`, `verified`, and `passes` fields are ONLY set to `true` by the `develop-specs` skill AFTER actual source code is written, tests are run, and git commits are created. The create-specs skill defines WHAT needs to be done — it does NOT evaluate WHETHER it is done.
+
 Create `story_list.json` in the feature folder:
 
 ```json
@@ -374,10 +386,10 @@ Create `story_list.json` in the feature folder:
         "Build UI components"
       ],
       "definition_of_done": [
-        { "item": "Code complete and compiles without errors", "done": false },
-        { "item": "Unit tests written and passing (>80% coverage)", "done": false },
+        { "item": "Code complete and compiles without errors (pnpm build passes)", "done": false },
+        { "item": "Unit tests written and passing", "done": false },
         { "item": "Integration tests written and passing", "done": false },
-        { "item": "Code review completed", "done": false },
+        { "item": "No TypeScript errors in changed files (tsc --noEmit passes)", "done": false },
         { "item": "Documentation updated", "done": false }
       ],
       "acceptance_criteria": [
@@ -402,15 +414,15 @@ These three arrays serve distinct purposes:
 | Field | Purpose | Examples |
 |-------|---------|----------|
 | **steps** | Implementation tasks - what to build | "Create database schema", "Build form component", "Add API endpoint" |
-| **definition_of_done** | Completion checklist - is the work done? | "Code compiles", "Tests passing", "Code review completed" |
+| **definition_of_done** | Completion checklist - is the work done? | "Code compiles (pnpm build)", "Tests passing", "No TS errors (tsc --noEmit)" |
 | **acceptance_criteria** | Standards verification - does it meet architectural/quality standards? | "Uses createRouterWithActor pattern", "RLS policies implemented" |
 
 **steps** = The ordered implementation tasks to complete the story (what you actually build)
 
-**definition_of_done** = Generic completion checklist that applies to any story:
-- Code complete and compiles
-- Tests written and passing
-- Code review completed
+**definition_of_done** = Generic completion checklist that applies to any story. Each item MUST be mechanically verifiable (can run a command to check):
+- Code complete and compiles without errors (pnpm build passes)
+- Tests written and passing (test runner output observed)
+- No TypeScript errors in changed files (tsc --noEmit passes)
 - Documentation updated
 
 **acceptance_criteria** = Architectural and standards verification specific to this story:
@@ -447,7 +459,9 @@ Extract stories from specs.md and prd.md:
 
 5. **Definition of Done** (completion checklist):
    - Keep generic across all stories
-   - Standard items: code compiles, tests passing, review completed, docs updated
+   - Standard items: code compiles (pnpm build), tests passing, no TS errors (tsc --noEmit), docs updated
+   - Every item MUST be mechanically verifiable — the developer must be able to run a command to confirm it
+   - Avoid subjective items like "code review completed" — use verifiable items like "no TypeScript errors (tsc --noEmit passes)"
    - Customize only if story has unique completion requirements
 
 6. **Acceptance Criteria** (standards verification):
@@ -487,10 +501,10 @@ Create these story entries:
         "Add error handling for failed login attempts"
       ],
       "definition_of_done": [
-        { "item": "Code complete and compiles without errors", "done": false },
+        { "item": "Code complete and compiles without errors (pnpm build passes)", "done": false },
         { "item": "Unit tests for auth service passing", "done": false },
         { "item": "E2E test for login flow passing", "done": false },
-        { "item": "Code review completed", "done": false }
+        { "item": "No TypeScript errors in changed files (tsc --noEmit passes)", "done": false }
       ],
       "acceptance_criteria": [
         { "item": "Uses createRouterWithActor pattern for auth router", "verified": false, "verification_method": "manual" },
@@ -520,11 +534,11 @@ Create these story entries:
         "Add token expiry handling"
       ],
       "definition_of_done": [
-        { "item": "Code complete and compiles without errors", "done": false },
+        { "item": "Code complete and compiles without errors (pnpm build passes)", "done": false },
         { "item": "Unit tests for token generation/validation passing", "done": false },
         { "item": "Integration tests for email sending passing", "done": false },
         { "item": "E2E test for full reset flow passing", "done": false },
-        { "item": "Code review completed", "done": false }
+        { "item": "No TypeScript errors in changed files (tsc --noEmit passes)", "done": false }
       ],
       "acceptance_criteria": [
         { "item": "Reset tokens are cryptographically secure (crypto.randomBytes)", "verified": false, "verification_method": "unit_test" },
@@ -570,8 +584,14 @@ Before marking specs complete:
 
 ## Integration with develop-specs Skill
 
-After creating specs documentation with story_list.json:
-1. Use the `develop-specs` skill to implement features
-2. The agent will read story_list.json and work through stories one at a time
-3. Each story requires ALL definition_of_done items AND ALL acceptance_criteria to be verified before `passes: true`
-4. Progress is tracked via git commits and story_list.json updates
+**Handoff contract**: create-specs produces story_list.json with all stories in `pending` state. develop-specs consumes it and advances stories through implementation.
+
+| Field | create-specs sets | develop-specs sets |
+|-------|------------------|-------------------|
+| `status` | `"pending"` | `"in_progress"` → `"testing"` → `"passes"` |
+| `passes` | `false` | `true` (only after code + tests + commits) |
+| `done` (DoD) | `false` | `true` (only after implementing the item) |
+| `verified` (AC) | `false` | `true` (only after running verification) |
+| `commits` | `[]` | `[{ hash, message, date }]` |
+
+**CRITICAL**: create-specs MUST NEVER set `done: true`, `verified: true`, `passes: true`, or `status: "passes"`. These fields are exclusively managed by develop-specs after actual source code is written, tests are executed, and git commits are created.

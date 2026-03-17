@@ -60,7 +60,7 @@
           "status": {
             "type": "string",
             "enum": ["pending", "in_progress", "testing", "blocked", "passes"],
-            "description": "Current status of the story"
+            "description": "Current status of the story. MUST be 'pending' when created by create-specs. Status progression: pending -> in_progress -> testing -> passes. Only develop-specs may advance status beyond 'pending'."
           },
           "steps": {
             "type": "array",
@@ -82,7 +82,7 @@
                 },
                 "done": {
                   "type": "boolean",
-                  "description": "Whether this item is complete"
+                  "description": "Whether this item is complete. MUST be false when created by create-specs. Only develop-specs may set to true after actual code implementation."
                 },
                 "notes": {
                   "type": "string",
@@ -104,7 +104,7 @@
                 },
                 "verified": {
                   "type": "boolean",
-                  "description": "Whether this criterion has been verified"
+                  "description": "Whether this criterion has been verified by running actual tests or manual inspection of implemented code. MUST be false when created by create-specs."
                 },
                 "verification_method": {
                   "type": "string",
@@ -120,7 +120,7 @@
           },
           "passes": {
             "type": "boolean",
-            "description": "True ONLY when ALL definition_of_done items are done AND ALL acceptance_criteria are verified"
+            "description": "True ONLY when ALL definition_of_done items are done, ALL acceptance_criteria are verified, AND commits array is non-empty. MUST be false when created by create-specs. Only develop-specs may set this to true after actual implementation."
           },
           "verification_script": {
             "type": "string",

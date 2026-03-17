@@ -7,6 +7,10 @@ description: Run smoke, regression, and integration tests for a completed spec i
 
 Run the full testing protocol against a completed (or partially completed) spec implementation. Designed for the scenario where `develop-specs` finished writing code but testing was skipped, incomplete, or needs re-running.
 
+## Execution
+
+**MANDATORY**: Spawn a dedicated agent (subagent) to execute this skill. Do NOT run inline in the main conversation — use the Agent tool with a complete prompt including these instructions and the user's request.
+
 ## When to Use
 
 - After `develop-specs` completes implementation but tests were not run

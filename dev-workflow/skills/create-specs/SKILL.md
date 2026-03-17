@@ -7,6 +7,10 @@ description: Creates and consolidates feature specification documentation in the
 
 Create comprehensive feature specification documentation by consolidating multiple planning artifacts into well-organized, AI-optimized documentation in `_context/{project}/{feature-name}/`.
 
+## Execution
+
+**MANDATORY**: Spawn a dedicated agent (subagent) to execute this skill. Do NOT run inline in the main conversation — use the Agent tool with a complete prompt including these instructions and the user's request.
+
 ## Instructions
 
 ### Step 1: Determine Feature Location

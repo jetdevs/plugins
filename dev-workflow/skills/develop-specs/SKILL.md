@@ -7,6 +7,10 @@ description: Implements features by writing code guided by story_list.json track
 
 Implement features systematically using the Anthropic Agent Harness Protocol. This skill treats the codebase + git + story_list.json as long-term memory, enabling reliable feature development across context resets.
 
+## Execution
+
+**MANDATORY**: Spawn a dedicated agent (subagent) to execute this skill. Do NOT run inline in the main conversation — use the Agent tool with a complete prompt including these instructions and the user's request.
+
 ## Core Philosophy
 
 The agent completes ONE story at a time, verifies it with tests, updates the story_list.json, commits, and only then moves to the next story. This ensures:

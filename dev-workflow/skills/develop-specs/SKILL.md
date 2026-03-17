@@ -122,16 +122,35 @@ Example definition_of_done items:
 
 When all DoD items are done, set `status: "testing"` and follow this protocol. Testing follows the project's testing patterns (see `_context/_arch/patterns-testing.md`).
 
-**Foundational rule: NEVER mock the database.** All tests must run against real PostgreSQL. Mocked DB tests are not tests — they verify mock behavior, not application behavior.
+**Foundational rules:**
+1. **NEVER mock the database.** All tests must run against real PostgreSQL/database. Mocked DB tests verify mock behavior, not application behavior.
+2. **NEVER count mock-based tests as functional verification.** A test that mocks HTTP calls, database queries, or external services proves nothing about whether the actual system works. Mock-based unit tests are useful for development but they DO NOT satisfy acceptance criteria or definition of done items.
+3. **The system under test MUST be running.** For API/backend stories, the server must be started and tests must hit real endpoints. For frontend stories, the app must be running and tests must interact with real pages.
 
-##### Step 1: Discover Existing Tests
+##### What counts as a valid test?
 
-Before writing new tests, understand what already exists:
+| Valid (counts toward `passes`) | Invalid (does NOT count) |
+|-------------------------------|--------------------------|
+| Integration test hitting real database | Unit test with `vi.mock("@/db/clients")` |
+| E2E test against running server | Test with mocked HTTP (`vi.mock("node-fetch")`) |
+| Playwright test loading real pages | Test with in-memory Map pretending to be DB |
+| API test calling real endpoints | Test with mocked Fastify request/reply |
+| Test against real PostgreSQL test DB | Test using `jest.fn()` for all dependencies |
+
+**If a test file contains `vi.mock`, `jest.mock`, `sinon.stub`, or manual mock objects for core infrastructure (database, HTTP, message queues), it is a mock-based test. Mock-based tests CANNOT be cited as evidence for `verified: true` or `done: true`.**
+
+##### Step 1: Discover and Classify Existing Tests
+
+Before writing new tests, understand what already exists AND whether they are real or mocked:
 
 ```bash
 # Find existing test files for this module/feature
 find src/test -name "*.spec.ts" | grep -i {feature}
 find src/test -name "*.test.ts" | grep -i {feature}
+
+# CRITICAL: Check if tests use mocks (these don't count as functional verification)
+grep -l "vi\.mock\|jest\.mock\|sinon\.stub\|new Map()" src/test/**/*.{spec,test}.ts 2>/dev/null
+grep -l "mockResolvedValue\|mockImplementation\|createMock" src/test/**/*.{spec,test}.ts 2>/dev/null
 
 # Check smoke test page array — is the new page already listed?
 grep -n "{route-path}" src/test/e2e/smoke*.spec.ts
@@ -140,10 +159,17 @@ grep -n "{route-path}" src/test/e2e/smoke*.spec.ts
 ls src/test/e2e/regression/
 ```
 
+Classify each test file:
+- **REAL**: Connects to actual database, calls real endpoints, starts real server
+- **MOCK**: Uses vi.mock/jest.mock, in-memory stubs, mocked HTTP clients
+
+Only REAL tests count toward verification. Report mock tests separately — they exist but don't prove the system works.
+
 Determine:
-- Which test files already exist and what they cover
-- Which new tests are needed for the changes in this story
+- Which REAL test files already exist and what they cover
+- Which new REAL tests are needed for the changes in this story
 - Which existing tests need updating due to the changes (new routes, renamed fields, changed behavior)
+- Whether the service/app needs to be running for tests (and if so, start it)
 
 ##### Step 2: Run Smoke Tests (Page Load Verification)
 
@@ -203,16 +229,29 @@ pnpm playwright test regression/{feature}.spec.ts
 
 ##### Step 4: Run Integration Tests (API Verification)
 
-If this story modifies tRPC procedures, database queries, or API endpoints:
+If this story modifies tRPC procedures, database queries, API endpoints, or backend services:
 
-1. **Write or update integration tests** that hit a real PostgreSQL test database
-2. **Run them**:
+1. **Ensure infrastructure is running**:
+   - Database: PostgreSQL must be up and migrated (`pnpm db:migrate` or equivalent)
+   - Cache: Redis must be up if the service uses it
+   - Server: The API/service must be started (`pnpm dev` or `pnpm start`)
+   - Verify with a health check: `curl http://localhost:{port}/health` or equivalent
+
+2. **Write or update integration tests** that hit a real database and real endpoints:
+   - Tests MUST connect to real PostgreSQL (not SQLite, not in-memory, not mocked)
+   - Tests MUST call real HTTP endpoints or tRPC procedures (not mocked handlers)
+   - If the test file contains `vi.mock` or `jest.mock` for DB/HTTP — it is NOT an integration test
+
+3. **Run them**:
 ```bash
 pnpm test --testPathPattern={feature}
 # OR
 pnpm vitest run src/test/integration/{feature}
 ```
-3. **Record test output**
+
+4. **Record test output** — paste the actual test runner results showing which tests ran and passed
+
+**If the service cannot be started** (missing env vars, database not provisioned, etc.), document this as a **blocker** and set status to `"blocked"`. Do NOT mark the story as `passes` — infrastructure issues must be resolved first.
 
 ##### Step 5: Type Check
 
@@ -249,14 +288,19 @@ For each item:
 
 ##### Testing Checklist (All Must Be True Before `passes`)
 
-- [ ] Smoke tests pass for all affected pages
-- [ ] New pages added to smoke test PAGES array
+- [ ] Existing tests classified as REAL or MOCK — only REAL tests count
+- [ ] No mock-based test results cited as verification evidence
+- [ ] Service/app is running (for API/backend stories: server started, database connected)
+- [ ] Smoke tests pass for all affected pages (frontend stories)
+- [ ] New pages added to smoke test PAGES array (frontend stories)
 - [ ] Regression tests cover page load, detail navigation, and dialog interaction for affected modules
 - [ ] Integration tests pass against real PostgreSQL (NO mocked database)
+- [ ] Integration tests call real endpoints (NO mocked HTTP handlers)
 - [ ] Type check passes (`tsc --noEmit`)
 - [ ] All `acceptance_criteria` items have `verified: true` with evidence in `notes`
+- [ ] Evidence references REAL test output (not mock test output)
 - [ ] No `monitor.clear()` before `assertNoErrors()` in any test
-- [ ] No database mocks (`vi.mock("@/db/clients")`) in any test
+- [ ] No database mocks (`vi.mock("@/db/clients")`) in any test used for verification
 
 ### Step 4: Evaluate Completion
 
@@ -480,9 +524,12 @@ When a test fails:
 - Set `passes: true` if ANY AC item has `"verified": false`
 - Set `passes: true` when the `commits` array is empty
 - Set `passes: true` without running the Testing Protocol (smoke + regression + integration + typecheck)
+- Set `passes: true` based on mock-based test results (tests using vi.mock/jest.mock for DB, HTTP, or core infra)
 - Set `done: true` on DoD items without having written actual source code
 - Set `verified: true` on AC items without running the verification_method and observing output
 - Set `verified: true` without adding a `notes` field with evidence
+- Cite mock-based unit tests as evidence for `verified: true` — they prove nothing about real system behavior
+- Count "N tests passing" as verification without confirming the tests hit real infrastructure (database, API, running server)
 - Change any completion fields (`done`/`verified`/`passes`) during spec review, planning, or documentation-only sessions
 - Skip statuses (e.g., `pending` directly to `passes`)
 - Mock the database in tests (`vi.mock("@/db/clients")` or similar)

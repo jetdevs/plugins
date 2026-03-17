@@ -11,6 +11,12 @@ Implement features systematically using the Anthropic Agent Harness Protocol. Th
 
 **MANDATORY**: Spawn a dedicated agent (subagent) to execute this skill. Do NOT run inline in the main conversation — use the Agent tool with a complete prompt including these instructions and the user's request.
 
+## Verification Rubric
+
+**Read `assets/verification-rubric.md` before evaluating any story.** The rubric defines exactly what PASS and FAIL mean for each evaluation dimension. A story MUST score PASS on ALL seven sections (Code Exists, Infrastructure Running, Test Classification, Test Execution, Acceptance Criteria Evidence, Definition of Done, Status Progression) before `passes: true` can be set.
+
+The rubric also lists 10 automatic FAIL conditions — if any one is true, the story cannot pass regardless of other results.
+
 ## Core Philosophy
 
 The agent completes ONE story at a time, verifies it with tests, updates the story_list.json, commits, and only then moves to the next story. This ensures:
@@ -267,17 +273,38 @@ pnpm typecheck
 
 Record whether it passes clean or has errors.
 
-##### Step 6: Verify Acceptance Criteria
+##### Step 6: Self-Audit — Test Classification Report (MANDATORY)
 
-NOW — with all tests passing — verify each `acceptance_criteria` item:
+**Before setting ANY status or writing to story_list.json**, you MUST produce a test classification report. This is not optional. Output a table like this:
+
+```
+TEST CLASSIFICATION REPORT
+| Test File | Type | Mocks Used | Valid for Verification? |
+|-----------|------|------------|------------------------|
+| src/test/e2e/smoke.spec.ts | E2E | None | YES |
+| src/test/unit/adapter.test.ts | Unit | vi.mock("node-fetch") | NO — mocked HTTP |
+| src/test/functional/api.spec.ts | Functional | None (hits localhost:4100) | YES |
+```
+
+Rules for this report:
+- Grep every test file for `vi.mock`, `jest.mock`, `sinon.stub`, `new Map()` as DB replacement, `mockResolvedValue`, `mockImplementation`
+- Any test with mocked DB, HTTP, or core infrastructure = **NO** for verification
+- Only tests marked **YES** can be cited as evidence in `notes` fields
+- If the only tests that exist are mock-based, you MUST write real tests before proceeding
+
+**Do NOT skip this step.** Do NOT produce a summary like "641 tests passed" without this breakdown. The number of tests is meaningless — only the classification matters.
+
+##### Step 7: Verify Acceptance Criteria
+
+NOW — with the classification report complete and all REAL tests passing — verify each `acceptance_criteria` item:
 
 For each item:
 1. Check the `verification_method` field
 2. Execute verification based on method:
-   - **`unit_test` / `integration_test` / `e2e_test`**: Reference the specific test that covers this criterion. If the test ran and passed in Steps 2-4, cite it. If no test covers it, WRITE one.
+   - **`unit_test` / `integration_test` / `e2e_test`**: Reference the specific REAL test (marked YES in classification report) that covers this criterion. If no real test covers it, WRITE one.
    - **`manual`**: Describe what you checked and what you observed. "Looks correct" is NOT sufficient — describe the specific file, line, and behavior you verified.
 3. Set `"verified": true` ONLY after completing the above
-4. Add a `notes` field describing the evidence
+4. Add a `notes` field describing the evidence — MUST reference a test marked YES in the classification report, or describe a manual verification with specific file:line details
 
 ```json
 {
@@ -288,11 +315,11 @@ For each item:
 }
 ```
 
-**You MUST paste or summarize actual test runner output as evidence. "Tests should pass" is not verification.**
+**You MUST paste or summarize actual test runner output as evidence. "Tests should pass" is not verification. "N tests passed" without classification is not verification.**
 
 ##### Testing Checklist (All Must Be True Before `passes`)
 
-- [ ] Existing tests classified as REAL or MOCK — only REAL tests count
+- [ ] Test Classification Report produced (Step 6) — every test file classified as REAL or MOCK
 - [ ] No mock-based test results cited as verification evidence
 - [ ] Service/app is running (for API/backend stories: server started, database connected)
 - [ ] Smoke tests pass for all affected pages (frontend stories)
@@ -302,20 +329,23 @@ For each item:
 - [ ] Integration tests call real endpoints (NO mocked HTTP handlers)
 - [ ] Type check passes (`tsc --noEmit`)
 - [ ] All `acceptance_criteria` items have `verified: true` with evidence in `notes`
-- [ ] Evidence references REAL test output (not mock test output)
+- [ ] Evidence references ONLY tests marked YES in classification report
 - [ ] No `monitor.clear()` before `assertNoErrors()` in any test
 - [ ] No database mocks (`vi.mock("@/db/clients")`) in any test used for verification
 
 ### Step 4: Evaluate Completion
 
-A story can ONLY have `passes: true` when ALL SEVEN conditions are met:
+**Apply the Verification Rubric** (`assets/verification-rubric.md`). Score each of the 7 sections. If ANY section scores FAIL, the story cannot pass.
+
+A story can ONLY have `passes: true` when ALL EIGHT conditions are met:
 
 1. **ALL** `definition_of_done` items have `"done": true`
 2. **ALL** `acceptance_criteria` items have `"verified": true` with evidence in `notes`
-3. **Smoke tests** pass for all affected pages (new pages added to PAGES array)
-4. **Regression tests** exist and pass for affected modules (covering page load, detail nav, dialog interaction as applicable)
-5. **Integration tests** pass against real PostgreSQL (no mocked database)
-6. **Type check** passes (`tsc --noEmit` or `pnpm typecheck`)
+3. **Test Classification Report** produced — every test file classified as REAL or MOCK
+4. **Smoke tests** pass for all affected pages (new pages added to PAGES array)
+5. **Regression tests** exist and pass for affected modules (covering page load, detail nav, dialog interaction as applicable)
+6. **Integration tests** pass against real infrastructure (no mocked database, no mocked HTTP)
+7. **Type check** passes (`tsc --noEmit` or `pnpm typecheck`)
 7. **At least one git commit** exists in the story's `commits` array with a real hash
 
 ```javascript
@@ -336,6 +366,8 @@ const passes = allDoDDone && allACVerified && hasCommits && sourceFilesExist
 - If `commits` array is empty → `passes` CANNOT be true (no commits = no code = no passes)
 - If `status` is not `"testing"` or `"passes"` → `passes` CANNOT be true (must go through status progression)
 - If you did not run the Testing Protocol (Step 3c) in this session → `passes` CANNOT be true
+- If you did not produce a Test Classification Report (Step 6) → `passes` CANNOT be true
+- If any `verified` item cites a test marked MOCK in the classification report → `passes` CANNOT be true
 - If any `verified` item lacks a `notes` field with evidence → `passes` CANNOT be true
 
 ### Step 5: Update story_list.json
@@ -429,12 +461,13 @@ READ story_list.json
   -> Implement (working through DoD items)
   -> Set status: "testing"
   -> TESTING PROTOCOL:
-     1. Discover existing tests (find affected smoke/regression/integration tests)
+     1. Discover + CLASSIFY existing tests (REAL vs MOCK — grep for vi.mock/jest.mock)
      2. Run smoke tests (add new pages to PAGES array if needed)
      3. Write/update regression tests (page load, detail nav, dialog interaction)
-     4. Run integration tests against real PostgreSQL
+     4. Start service, run integration tests against real infrastructure
      5. Run type check (tsc --noEmit)
-     6. Verify each AC item with evidence
+     6. Produce Test Classification Report (MANDATORY before any status changes)
+     7. Verify each AC item with evidence from REAL tests only
   -> ALL DoD done? ALL AC verified? ALL tests passing?
      -> YES: Set passes: true, COMMIT, update log
      -> NO: Fix issues, do NOT set passes: true
@@ -577,5 +610,6 @@ This skill integrates with:
 - story_list.json is per-feature, not global (enables parallel feature work)
 - The schema is at `.claude/skills/create-specs/story_list.schema.json`
 - Template is at `.claude/skills/create-specs/story_list.template.json`
+- **Verification rubric** is at `assets/verification-rubric.md` — defines PASS/FAIL criteria for all 7 evaluation sections
 - This protocol is based on the Anthropic Agent Harness Protocol
 - JSON is used instead of markdown for better LLM parsing reliability

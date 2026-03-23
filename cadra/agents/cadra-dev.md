@@ -21,6 +21,7 @@ Invoke these skills when relevant:
 - `cadra:sdk-refactor` — CadraOS SDK adapter, SSE streaming, chat components
 - `cadra:open-api` — REST API endpoints, withApiAuth, withPrivilegedDb
 - `cadra:agent-execution` — Agent performance optimization, batch tools, parallel delegation
+- `cadra:plugin-authoring` — Creating Cadra runtime plugins (manifest, tools, hooks, context engines, channels)
 - `sdk:migrate-extension` — Creating new extensions
 - `sdk:migrate-router` — Router patterns (createRouterWithActor)
 - `sdk:migrate-schema` — Database schema patterns

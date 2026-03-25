@@ -5,7 +5,7 @@ description: Use when creating or improving Claude Code plugin agents, skills, o
 
 # Plugin Authoring Patterns
 
-Best practices for writing high-quality Claude Code agents, skills, and plugin structures. These patterns are derived from the monorepo's 8 active plugins.
+Best practices for writing high-quality Claude Code agents, skills, and plugin structures. These patterns are derived from the monorepo's 9 active plugins.
 
 ## Agent Definition (`agents/{name}.md`)
 
@@ -168,10 +168,13 @@ plugins/{name}/
   .claude-plugin/
     plugin.json           # Required manifest
   agents/
-    {name}-dev.md         # Primary development agent
+    {name}-dev.md         # Primary development agent (optional)
   skills/
     {area-1}/SKILL.md     # One skill per feature area
     {area-2}/SKILL.md
+  hooks/
+    hooks.json            # PostToolUse/Stop hook definitions (optional)
+    *.sh                  # Hook scripts (optional)
 ```
 
 ### plugin.json
@@ -192,6 +195,56 @@ plugins/{name}/
 | Agent file | `{name}.md` | `cadra-dev.md` |
 | Skill dir | kebab-case | `billing-subscriptions` |
 | Skill file | Always `SKILL.md` | `skills/billing-subscriptions/SKILL.md` |
+
+### Skill Naming Rules
+
+Skill names must clearly communicate **what the skill does** and **who acts**. A reader should understand the skill's purpose from the name alone without reading the description.
+
+**Name by action, not by tool or actor:**
+| Good | Bad | Why |
+|------|-----|-----|
+| `codex-review` | `spec-feedback-reviewer` | Tells you it launches Codex, not that "someone reviews feedback" |
+| `address-feedback` | `review-specs-gpt5` | Tells you Claude addresses feedback, not "GPT-5 reviews specs" |
+| `create-specs` | `spec-writer` | Action-oriented, not role-oriented |
+
+**Rules:**
+- Use `verb-noun` format: `create-specs`, `address-feedback`, `build-index`
+- Name for what the skill DOES, not what it IS
+- If multiple actors are involved in a workflow, name each skill for the actor that runs it:
+  - `codex-review` — Claude launches Codex (Codex acts)
+  - `address-feedback` — Claude processes feedback (Claude acts)
+- Never name a Claude skill after another AI system (e.g., `review-specs-gpt5` confuses who acts)
+- If a skill is a thin launcher for an external tool, name it `{tool}-{action}`: `codex-review`, not `launch-codex-for-spec-review`
+
+**Multi-step workflow naming:**
+When skills form a pipeline, names should read as a sequence:
+```
+/create-specs → /codex-review → /address-feedback → /codex-review → /develop-specs
+```
+Each name answers "what happens at this step?" not "what system is involved?"
+
+### Avoiding Duplication
+
+Before creating a new skill, check for overlap:
+
+1. **Search existing skills** — `grep -r "description:" plugins/*/skills/*/SKILL.md` and look for similar trigger phrases
+2. **Check for actor confusion** — Two skills that do the same thing but are named for different actors (e.g., `review-specs-gpt5` and `spec-feedback-reviewer` both "review specs")
+3. **Check for scope overlap** — A broad skill and a narrow skill covering the same area (e.g., `review-feedback` duplicating `spec-feedback-reviewer`)
+
+**Resolution:** If two skills overlap, merge into one with the clearer name. If they serve different actors in a workflow, give each a distinct action-oriented name.
+
+### Agent vs Skill Separation
+
+Agents and skills must not duplicate content:
+
+| Agent contains | Skill contains |
+|---------------|----------------|
+| WHAT/WHEN (workflow, orchestration, inventory) | HOW (templates, patterns, checklists) |
+| Ecosystem inventory (plugin list, skill counts) | Writing standards (frontmatter format, body structure) |
+| Decision logic (gap analysis, update planning) | Quality checklists (trigger phrases, file paths) |
+| Context loading order | Naming conventions, grouping strategy |
+
+**Rule:** If the agent says "create a skill," it should invoke the skill for HOW. The agent should never contain templates or formatting rules that belong in the skill.
 
 ### One Agent Per Plugin (Guideline)
 Most plugins have one primary agent (e.g., `cadra-dev`, `yobo-dev`, `crm-dev`). Exception: `dev-workflow` has two agents for different roles. Only add a second agent when the domains are truly distinct.

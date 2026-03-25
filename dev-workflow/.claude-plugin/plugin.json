@@ -1,6 +1,6 @@
 {
   "name": "dev-workflow",
-  "description": "Development workflow skills for specs, commits, code indexing, and spec reviews",
+  "description": "Development workflow skills for specs, Codex review, feedback, commits, code indexing, Jira, and feature lifecycle",
   "version": "1.0.0",
   "author": {
     "name": "JetDevs Team"

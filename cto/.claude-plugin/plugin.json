@@ -1,0 +1,9 @@
+{
+  "name": "cto",
+  "description": "Strategic CTO agent for cross-platform planning, impact assessment, architecture guidance, and business-aligned technology strategy",
+  "version": "1.0.0",
+  "author": {
+    "name": "JetDevs Team"
+  },
+  "keywords": ["strategy", "roadmap", "architecture", "planning", "assessment", "cto"]
+}

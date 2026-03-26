@@ -14,14 +14,45 @@ Start a new development session by creating a session file in `_ai/sessions/`.
 
 ## Session Naming Convention
 
-Format: `YYYY-MM-DD-[project-name]-description.md`
+**CRITICAL: The filename MUST include the project name wrapped in literal square brackets.**
 
-- The `[project-name]` tag identifies which project the session belongs to (e.g., `[crm]`, `[cadra-web]`, `[cadra]`, `[plugins]`)
-- Description should be kebab-case, concise, and descriptive
-- Examples:
-  - `2026-03-26-[cadra-web]-private-agents.md`
-  - `2026-03-26-[plugins]-skill-cleanup-and-cto-agent.md`
-  - `2026-03-26-[yobo]-sub-org-users-p1.md`
+Pattern: `YYYY-MM-DD-[PROJECT]-description.md`
+
+The square brackets `[` and `]` are **literal characters in the filename**, not placeholder syntax. They enable grep/filtering by project tag.
+
+### How to construct the filename
+
+1. Start with today's date: `2026-03-26`
+2. Add a hyphen: `2026-03-26-`
+3. Add the project name **inside literal square brackets**: `2026-03-26-[cadra-web]`
+4. Add a hyphen and kebab-case description: `2026-03-26-[cadra-web]-private-agents.md`
+
+### Project tags
+
+Use these project tags (must match exactly):
+- `[cadra-web]`, `[cadra-api]`, `[cadra]` (platform-level)
+- `[yobo]`, `[yobo-merchant]`
+- `[crm]`
+- `[slides]`
+- `[core-sdk]`, `[core-saas]`
+- `[plugins]`
+- `[message-api]`
+
+### Correct examples
+
+```
+2026-03-26-[cadra-web]-private-agents.md        ✓ brackets in filename
+2026-03-26-[plugins]-skill-cleanup.md            ✓ brackets in filename
+2026-03-26-[yobo]-sub-org-users-p1.md            ✓ brackets in filename
+```
+
+### WRONG examples
+
+```
+2026-03-26-cadra-web-private-agents.md           ✗ missing brackets
+2026-03-26-cadra-private-agents.md               ✗ missing brackets
+session-2026-03-26-cadra.md                      ✗ wrong format entirely
+```
 
 ## Multiple Concurrent Sessions
 

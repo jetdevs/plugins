@@ -235,6 +235,43 @@ Every lesson MUST include:
   - Evidence: used Chrome automation to verify CDN cache fix in this session
 ```
 
+### User Steering & Corrections Section
+
+Maintain a `## User Steering & Corrections` section. This captures every instance where the user had to redirect, correct, clarify, or mentor the AI agent during the session. **This is training data** — it reveals where agents need improvement.
+
+Record every user intervention that changed the agent's direction:
+
+```markdown
+## User Steering & Corrections
+
+### Corrections (agent was wrong or heading wrong direction)
+- **User said**: "review-specs-gpt5 was claude code's skill for reviewing Codex's feedback. That should have stayed"
+  - **What agent did wrong**: Deleted the skill thinking it was a Codex-only skill
+  - **Root cause**: Misunderstood the actor — assumed "gpt5" in the name meant it was FOR GPT-5
+  - **Lesson**: Ask before deleting. Skill names that reference another AI system are ambiguous about direction.
+
+### Clarifications (agent needed more context)
+- **User said**: "Codex's skill is here (correctly) — what I want is a new skill that knows how to call the codex cli command"
+  - **What was unclear**: The relationship between Claude's skill and Codex's skill
+  - **Resolution**: Created `codex-review` as a thin launcher, kept Codex's own skill untouched
+
+### Steering (user redirected approach or priorities)
+- **User said**: "Let's only focus on the plugins repo"
+  - **What agent was doing**: Trying to fix local `.claude/skills/` files too
+  - **Better approach**: Plugin marketplace is the single source of truth; local skills are stale copies
+
+### Requirements additions (user added scope mid-session)
+- **User said**: "It's possible the CTO will learn from discussions in Slack channels"
+  - **Impact**: Added `gather-intelligence` skill and Slack MCP integration to CTO agent
+```
+
+**Capture rules:**
+- Record the user's **exact words** (or close paraphrase) — this is the training signal
+- Explain what the agent was doing wrong or would have done without intervention
+- Identify the **root cause** of the misunderstanding (ambiguous name, missing context, wrong assumption)
+- Note if this reveals a pattern (e.g., agent consistently misidentifies actor/ownership)
+- Include requirements the user added mid-session that changed the design
+
 ### Next Steps Section
 
 Maintain `## Next Steps` with specific, actionable items. Include enough context that another developer (or AI agent) can pick up where this session left off.
@@ -347,6 +384,24 @@ search target for RAG retrieval and the key context for learning extraction.)
   - Confidence: confirmed | hypothesis
   - Evidence: commit hash, update block reference, or investigation step
 
+## User Steering & Corrections
+
+### Corrections (agent was wrong or heading wrong direction)
+- **User said**: "(exact words)"
+  - What agent did wrong, root cause, lesson
+
+### Clarifications (agent needed more context)
+- **User said**: "(exact words)"
+  - What was unclear, resolution
+
+### Steering (user redirected approach or priorities)
+- **User said**: "(exact words)"
+  - What agent was doing, better approach
+
+### Requirements additions (user added scope mid-session)
+- **User said**: "(exact words)"
+  - Impact on design/implementation
+
 ## Next Steps
 (Specific, actionable items with enough context to resume)
 ```
@@ -366,5 +421,6 @@ To support this pipeline, every session must:
 - Provide **evidence** (commit hashes, file paths) so golden docs can trace back to source
 - Capture **architecture issues** with status so unresolved issues surface in learnings
 - Record **SDK notes** per package so SDK-specific learnings aggregate cleanly
+- Capture **user steering & corrections** — every instance where the user had to redirect or correct the agent. This is training data for improving agent behavior and reveals systematic gaps in agent knowledge or judgment.
 
 **Always** update each relevant `CLAUDE.md` with learnings and standards discovered during the session.

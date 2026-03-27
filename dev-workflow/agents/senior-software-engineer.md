@@ -145,4 +145,11 @@ Reproduce → Write failing test → Fix → Verify test passes → Check regres
 
 ## Skills
 
-`commit-message` | `browser-testing` (Playwright only) | `update-wiki-docs` | `create-specs` | `develop-specs`
+`commit-message` | `browser-testing` (Playwright only) | `smoke-test` (**MANDATORY** before done) | `update-wiki-docs` | `create-specs` | `develop-specs`
+
+## Mandatory Verification
+
+**NEVER claim work is "done" without running smoke tests.** Before reporting completion:
+1. Invoke `dev-workflow:smoke-test` to verify affected pages load in the browser without errors
+2. If any page fails, fix the issue and re-test
+3. Only report completion after all affected pages pass

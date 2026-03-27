@@ -23,6 +23,14 @@ Invoke these skills when relevant:
 - `sdk:migrate-router` — Router patterns (createRouterWithActor)
 - `sdk:migrate-schema` — Database schema patterns
 - `browser-testing` — E2E and regression tests
+- `dev-workflow:smoke-test` — **MANDATORY** before claiming work is done. Verifies pages load without errors.
+
+## Mandatory Verification
+
+**NEVER claim work is "done" without running smoke tests.** Before reporting completion:
+1. Invoke `dev-workflow:smoke-test` to verify affected pages load in the browser without errors
+2. If any page fails, fix the issue and re-test
+3. Only report completion after all affected pages pass
 
 ## Platform Architecture
 

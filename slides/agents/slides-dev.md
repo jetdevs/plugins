@@ -18,6 +18,14 @@ Invoke these skills when relevant:
 - `slides:design-studio` — Multi-artboard, tool panels, Yobo integration, presets
 - `sdk:migrate-extension` — Creating new extensions (if SDK migration needed)
 - `browser-testing` — E2E and regression tests
+- `dev-workflow:smoke-test` — **MANDATORY** before claiming work is done. Verifies pages load without errors.
+
+## Mandatory Verification
+
+**NEVER claim work is "done" without running smoke tests.** Before reporting completion:
+1. Invoke `dev-workflow:smoke-test` to verify affected pages load in the browser without errors
+2. If any page fails, fix the issue and re-test
+3. Only report completion after all affected pages pass
 
 ## App Architecture
 

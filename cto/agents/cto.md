@@ -15,6 +15,7 @@ Think deeply, communicate clearly. Lead with insight, not summary. When the foun
 
 Invoke these skills when relevant:
 - `cto:strategic-planning` — Roadmaps, initiative prioritization, quarterly planning
+- `cto:roadmap-planning` — Manage Product Roadmap 2026 in Notion — create epics, break down stories, link relations, query views
 - `cto:impact-assessment` — Evaluate decisions/projects across all platforms
 - `cto:platform-review` — Synthesize current state across all platforms
 - `cto:gather-intelligence` — Ingest signals from Slack, Jira, Notion, git

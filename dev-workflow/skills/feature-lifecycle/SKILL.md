@@ -181,15 +181,53 @@ Each agent prompt must include:
 
 **Between groups:** Update Jira status (In Progress → Done for completed stories, In Progress for next).
 
-### Post-Implementation
+### Post-Implementation: Verification Protocol
+
+**HARD GATE: No story can have `passes: true` until ALL 4 proof types are collected. No PR can be created until ALL stories pass.**
+
+#### Step 1: Infrastructure Setup
 
 1. **Run migration:** `pnpm db:migrate:run`
 2. **Deploy RLS:** `pnpm db:rls:deploy`
 3. **Sync permissions:** `pnpm generate:permissions && pnpm db:seed:rbac`
-4. **Build check:** `pnpm build`
-5. **Browser testing:** Use Playwright MCP tools to verify E2E flow
-6. **Fix bugs found during testing** — commit as separate bugfix commits
-7. **Final build check:** `pnpm build`
+4. **Seed data:** Run any seed scripts (e.g., `pnpm db:seed:agent-roles`)
+5. **Build check:** `pnpm build`
+6. **Start dev server with log capture:**
+```bash
+pnpm dev > /tmp/server-test.log 2>&1 &
+```
+
+#### Step 2: Verification per Story (invoke `/test-specs`)
+
+For EACH story, collect the **4 mandatory proof types**:
+
+| Proof | What | How | Required For |
+|-------|------|-----|--------------|
+| **Screenshot** | Visual proof the feature works | Playwright `page.screenshot()` saved to `evidence/` | All frontend stories |
+| **DB Records** | Data layer proof | Direct SQL query, paste output | All schema/data stories |
+| **Browser Console** | No client-side errors | Playwright console listener, assert 0 errors | All frontend stories |
+| **Server Console** | No server-side errors | `grep -i error /tmp/server-test.log` during test window | All stories |
+
+**Invoke `/test-specs` with the feature path** — it handles test classification, execution, and evidence collection against the verification rubric.
+
+#### Step 3: Fix and Re-verify
+
+- Fix bugs found during testing — commit as separate bugfix commits
+- Re-run verification for affected stories
+- Repeat until ALL stories have `passes: true`
+
+#### Step 4: Final Gate Check
+
+Before proceeding to Phase 4:
+```
+□ pnpm build passes
+□ ALL stories in story_list.json have passes: true
+□ ALL stories have 4 proof types in AC notes
+□ Server log clean during full test run
+□ No unacknowledged browser console errors
+```
+
+If ANY box is unchecked, go back to Step 2. **Do NOT proceed to PR creation.**
 
 ## Phase 4: Wrap Up
 

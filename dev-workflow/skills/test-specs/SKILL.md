@@ -177,33 +177,94 @@ pnpm tsc --noEmit
 pnpm typecheck
 ```
 
-### Step 3: Verify Acceptance Criteria
+### Step 3: Collect 4 Mandatory Proof Types
 
-With all REAL tests passing and the Test Classification Report produced, verify each `acceptance_criteria` item:
+**Every story requires ALL applicable proof types. These are non-negotiable gates for `passes: true`.**
+
+#### Proof 1: Screenshot Evidence (all frontend stories)
+
+Capture Playwright screenshots showing the feature in its working state:
+
+```typescript
+await page.screenshot({ path: `evidence/${storyId}-${description}.png` });
+```
+
+- Capture each new page, modal, dialog, or UI component in its **populated** state
+- "Page loads" is NOT sufficient — screenshot must show feature content (data, form fields, selections)
+- Reference file path in AC notes: `"Screenshot: evidence/CAD-25-role-grid.png"`
+
+#### Proof 2: Database Record Verification (all schema/data stories)
+
+Run SQL queries to prove records exist with correct values:
+
+```sql
+SELECT id, name, org_id, agent_type FROM agent_roles WHERE org_id IS NULL;
+-- Paste actual output rows
+```
+
+- Verify row counts, column values, foreign keys, nullable fields
+- Test RLS: query with and without org context
+- Reference query + output in AC notes
+
+#### Proof 3: Browser Console Clean (all frontend stories)
+
+Monitor for client-side errors during testing:
+
+```typescript
+const errors: string[] = [];
+page.on('console', msg => { if (msg.type() === 'error') errors.push(msg.text()); });
+page.on('pageerror', err => errors.push(err.message));
+// ... navigate and interact ...
+expect(errors).toEqual([]);
+```
+
+- Must be 0 errors (or only known/allowlisted errors)
+- Also check: no 4xx/5xx network requests on feature endpoints
+- Paste error count in AC notes
+
+#### Proof 4: Server Console Clean (all stories)
+
+Check server logs during the test window:
+
+```bash
+pnpm dev > /tmp/server-test.log 2>&1 &
+# ... run tests ...
+grep -i "error\|fatal\|unhandled\|INTERNAL_SERVER_ERROR" /tmp/server-test.log
+# Paste output (must be empty or allowlisted only)
+```
+
+- No unhandled promise rejections
+- No tRPC INTERNAL_SERVER_ERROR
+- No stack traces
+- Reference grep output in AC notes
+
+### Step 4: Verify Acceptance Criteria
+
+With all REAL tests passing, the Test Classification Report produced, and all 4 proof types collected, verify each `acceptance_criteria` item:
 
 1. Check the `verification_method` field
 2. Execute verification:
    - **`unit_test`/`integration_test`/`e2e_test`**: Reference a specific test marked **YES** in the classification report. If no real test covers this criterion, WRITE one.
    - **`manual`**: Describe the specific file, line, and behavior verified. "Looks correct" is NOT sufficient.
 3. Set `"verified": true` ONLY after completing verification
-4. Add a `notes` field with evidence — MUST reference a test marked YES in the classification report, or describe a manual verification with specific file:line details
+4. Add a `notes` field with evidence — MUST include at least one of the 4 proof types where applicable
 
 ```json
 {
-  "item": "Uses createRouterWithActor pattern",
+  "item": "3-column grid with compact cards (name + description only)",
   "verified": true,
-  "verification_method": "manual",
-  "notes": "Verified at src/extensions/my-feature/router.ts:15 — exports ActorRouterConfig, createRouterWithActor used in root.ts:42"
+  "verification_method": "e2e_test",
+  "notes": "Screenshot: evidence/CAD-25-role-grid.png — 3-col grid with 8 roles. Browser console: 0 errors. Server log: grep clean. Smoke test: smoke-pages.spec.ts (REAL) passes."
 }
 ```
 
 **Evidence quality**:
-- GOOD: `"22 functional tests against live API on localhost:4100 — all pass. Test file: src/test/functional/api.spec.ts (classified REAL)"`
-- BAD: `"641 tests passed"` (no classification), `"adapter.test.ts passes"` (if it's a MOCK test), `"looks correct"`
+- GOOD: `"Screenshot: evidence/CAD-25-modal.png. DB: SELECT count(*) FROM agent_roles WHERE org_id IS NULL → 8 rows. Console: 0 errors. Server: grep shows no errors."`
+- BAD: `"641 tests passed"` (no classification), `"adapter.test.ts passes"` (if MOCK), `"looks correct"`, `"build passes"` (build ≠ test)
 
 ### Step 4: Evaluate and Update story_list.json
 
-**Apply the Verification Rubric** (`plugins/dev-workflow/skills/develop-specs/assets/verification-rubric.md`). Score each of the 7 sections. If ANY section scores FAIL, the story cannot pass.
+**Apply the Verification Rubric** (`plugins/dev-workflow/skills/develop-specs/assets/verification-rubric.md`). Score each of the 8 sections. If ANY section scores FAIL, the story cannot pass.
 
 A story can ONLY have `passes: true` when ALL conditions are met:
 
@@ -216,6 +277,10 @@ A story can ONLY have `passes: true` when ALL conditions are met:
 7. Type check passes
 8. At least one git commit exists in the story's `commits` array
 9. All AC `notes` reference ONLY tests marked YES in classification report
+10. **Screenshot proof** collected for all frontend stories
+11. **Database record proof** collected for all schema/data stories
+12. **Browser console proof** (0 errors) collected for all frontend stories
+13. **Server console proof** (0 errors) collected for all stories
 
 Update `story_list.json` with results and commit:
 
@@ -229,6 +294,10 @@ Testing Protocol: ALL COMPLETE
 - [x] Integration tests passing
 - [x] Type check clean
 - [x] All AC verified with evidence
+- [x] Screenshot proof collected
+- [x] DB record proof collected
+- [x] Browser console clean (0 errors)
+- [x] Server console clean (0 errors)
 
 Story Status: PASSES"
 ```
@@ -252,6 +321,11 @@ If more untested stories remain, return to Step 2. When all stories are verified
 - If `commits` array is empty → `passes` CANNOT be `true`
 - If service/infra is not running (for backend stories) → `passes` CANNOT be `true`
 - If any `verified` item cites a test classified as MOCK → `passes` CANNOT be `true`
+- **NEVER** set `passes: true` without screenshot proof for frontend stories
+- **NEVER** set `passes: true` without DB record proof for schema/data stories
+- **NEVER** set `passes: true` with unacknowledged browser console errors
+- **NEVER** set `passes: true` with unacknowledged server console errors
+- **NEVER** claim "implementation complete" before running `/test-specs` — code written ≠ feature verified
 
 ## Integration
 
@@ -260,4 +334,4 @@ Works alongside:
 - **create-specs** — creates the `story_list.json` this skill reads
 - **browser-testing** — Playwright test patterns for E2E verification
 - **commit-message** — generates commit messages after verification
-- **Verification rubric** — `plugins/dev-workflow/skills/develop-specs/assets/verification-rubric.md` defines PASS/FAIL criteria for all 7 evaluation sections
+- **Verification rubric** — `plugins/dev-workflow/skills/develop-specs/assets/verification-rubric.md` defines PASS/FAIL criteria for all 8 evaluation sections (including the 4 proof types)
